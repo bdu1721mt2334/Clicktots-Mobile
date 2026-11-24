@@ -1,0 +1,673 @@
+/* Case Study page (CaseStudyPage.jsx) + detail page (CaseStudyDetail.jsx).
+   Intro styles ported from the IronStride source; everything is scoped under .cs-iron / .csd so the original
+   reset never leaks into the rest of the site. Font: the site's own (Michroma, see typography.css). */
+
+.cs-iron {
+  position: relative;
+  min-height: 100%;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 15px;
+  line-height: 160%;
+  background-color: #0b0f17;
+  /* clip both axes: nothing (e.g. the zoomed preloader mask) may make the page scroll past the last case study */
+  overflow: clip;
+}
+
+.cs-iron *,
+.cs-iron *::before,
+.cs-iron *::after,
+.csd *,
+.csd *::before,
+.csd *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.cs-iron img,
+.csd img {
+  display: block;
+  max-width: none;
+  color: transparent; /* no alt text over the tile while (or if) a picture loads */
+}
+
+.cs-iron .cs-container {
+  width: 100%;
+  height: 100%;
+}
+
+.cs-iron .wrapper {
+  padding-inline: 2rem;
+  max-width: 1440px;
+  width: 100%;
+  margin-inline: auto;
+}
+
+.cs-iron [data-text-anim] {
+  visibility: hidden;
+}
+
+.cs-iron .duplicate-char {
+  position: absolute;
+  inset: 0;
+  transform: translateY(100%);
+}
+
+/* ── preloader ── */
+.cs-iron .preloader-mask,
+.cs-iron .preloader-progress-bar,
+.cs-iron .preloader-bg {
+  position: absolute; /* fixed in the source; absolute keeps it inside the overlay */
+  top: 0;
+  left: 0;
+  height: 100svh;
+  width: 100%;
+  pointer-events: none;
+}
+
+.cs-iron .preloader-mask {
+  z-index: 100;
+  background-color: #1c1917;
+  /* the rounded "window" in the middle (drawn inline, so it never depends on an external file) */
+  -webkit-mask: linear-gradient(white, white), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 60'%3E%3Crect width='240' height='60' rx='30' fill='white'/%3E%3C/svg%3E") center / clamp(170px, 16vw, 230px) no-repeat;
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(white, white), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 60'%3E%3Crect width='240' height='60' rx='30' fill='white'/%3E%3C/svg%3E") center / clamp(170px, 16vw, 230px) no-repeat;
+  mask-composite: subtract;
+}
+
+.cs-iron .preloader-progress-bar {
+  width: 100%;
+  height: 100svh; /* one screen (100% would stretch over the grid below and push the text off-screen) */
+  z-index: 100;
+  background-color: #2d2925;
+}
+
+.cs-iron .preloader-bg {
+  background-color: #fff;
+  transform-origin: left;
+  transform: scaleX(0.2);
+}
+
+.cs-iron .preloader-logo {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+.cs-iron .preloader-logo p {
+  margin: auto;
+  text-align: center;
+  mix-blend-mode: difference;
+  font-size: clamp(0.75rem, 1vw, 0.95rem);
+  color: #fff;
+  font-weight: 400;
+  line-height: 100%;
+  white-space: nowrap;
+}
+
+/* ── buttons ── */
+.cs-iron button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 4px 4px 16px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  font-synthesis-weight: auto;
+  color: #0d1220;
+  background: #fff;
+}
+.cs-iron button .btn-icon {
+  width: 34px;
+  height: 34px;
+  background: #0a84ff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 6px;
+}
+
+/* ── header: just the logo (the overlay's close button sits top-right) ── */
+.cs-iron .header {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  width: 100%;
+  height: 200px;
+  z-index: 10;
+  background: linear-gradient(180deg, rgba(21, 21, 19, 0.7) 0%, rgba(21, 21, 19, 0) 100%);
+  pointer-events: none;
+}
+.cs-iron .header .wrapper {
+  display: flex;
+  align-items: center;
+  margin-top: 26px;
+  padding-right: 5.5rem;
+}
+.cs-iron .logo img {
+  height: 40px;
+  width: auto;
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.55));
+}
+
+/* ── hero: the photo in a rounded frame (same width as a case-study page) ── */
+.cs-iron .hero-section {
+  position: relative;
+  padding: 96px 0 30px;
+}
+/* the overlay's Back pill does this job */
+.csd-top .csd-btn { display: none; }
+.cs-iron .hero-section > .wrapper {
+  max-width: 1240px;
+}
+.cs-iron .hero-frame {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  width: 100%;
+  aspect-ratio: 21 / 9;
+  min-height: 520px;
+  max-height: calc(100svh - 136px);
+  border-radius: 24px;
+  overflow: hidden;
+  isolation: isolate; /* keeps the photo's z-index:-10 inside the frame */
+  background: #121826;
+  box-shadow: 0 50px 110px -50px rgba(10, 132, 255, 0.45);
+  padding: 0 34px 30px;
+}
+.cs-iron .hero-img {
+  position: absolute;
+  inset: 0;
+  z-index: -10;
+}
+.cs-iron .hero-img img {
+  will-change: transform;
+  transform: scale(1.2);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 62% 40%;
+}
+/* darken the left and the bottom so the copy reads over the bright office */
+.cs-iron .hero-img::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(8, 11, 20, 0.82) 0%, rgba(8, 11, 20, 0.5) 36%, rgba(8, 11, 20, 0) 62%),
+    linear-gradient(0deg, rgba(8, 11, 20, 0.75) 0%, rgba(8, 11, 20, 0) 50%);
+}
+.cs-iron .hero-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 32px;
+  width: 100%;
+}
+.cs-iron .content-main {
+  max-width: 760px;
+}
+.cs-iron .hero-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #ffcba8;
+}
+.cs-iron .divider {
+  width: 1px;
+  height: 28px;
+  margin: 10px 0 14px;
+  background: linear-gradient(180deg, #fff 0%, rgba(255, 255, 255, 0) 100%);
+}
+.cs-iron .content-main h1 {
+  /* big, stacked: "Case" with "Study" below it */
+  margin-left: -6px;
+  font-size: clamp(3rem, 7.4vw, 8rem) !important;
+  font-weight: 400;
+  line-height: 0.94 !important;
+  background: linear-gradient(180deg, #fff 17.73%, #cfe4ff 92.44%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.cs-iron .header-char {
+  background: linear-gradient(180deg, #fff 17.73%, #cfe4ff 92.44%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.cs-iron .hero-lede {
+  margin-top: 18px;
+  max-width: 520px;
+  font-size: 13px;
+  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+/* small scroll button in the hero (bottom-right of the photo) */
+.cs-iron .hero-scroll {
+  flex: 0 0 auto;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 14px 30px -14px rgba(0, 0, 0, 0.6);
+  transition: transform 0.25s, background 0.25s;
+}
+.cs-iron .hero-scroll:hover {
+  transform: translateY(-2px);
+  background: #fff;
+}
+
+/* ── one calm background for the whole page ──
+   deep warm charcoal, a soft amber glow behind the photo that fades down the page, a second very faint glow
+   behind the grid, and a whisper of film grain. No lines, no dots: hero and work read as one page. */
+.cs-iron .cs-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(70% 900px at 50% 0%, rgba(10, 132, 255, 0.11) 0%, rgba(10, 132, 255, 0.04) 45%, transparent 75%),
+    radial-gradient(60% 700px at 50% 78%, rgba(180, 212, 255, 0.05) 0%, transparent 70%),
+    linear-gradient(180deg, #0e1320 0%, #0b0f17 55%, #0a0d15 100%);
+}
+.cs-iron .cs-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.cs-iron .cs-container {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── the work (heading + grid) ── */
+.cs-iron .cs-work {
+  position: relative;
+  padding: 40px 0 32px;
+}
+.cs-iron .cs-work-head {
+  max-width: 760px;
+  margin: 0 auto 44px;
+  text-align: center;
+}
+.cs-iron .cs-work-k {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8cc6ff;
+}
+.cs-iron .cs-work-h {
+  margin-top: 14px;
+  text-wrap: balance;
+  font-size: clamp(1.4rem, 2.8vw, 2.6rem);
+  font-weight: 400;
+  line-height: 1.2;
+  color: #fff;
+}
+.cs-iron .cs-work-p {
+  margin: 14px auto 0;
+  max-width: 540px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* text fade-out when a case is opened (the grid fades its own tiles) */
+.cs-iron .hero-section,
+.cs-iron .cs-work-head,
+.cs-iron .header {
+  transition: opacity 0.34s ease, filter 0.34s ease;
+}
+.cs-iron.is-leaving .hero-section,
+.cs-iron.is-leaving .cs-work-head,
+.cs-iron.is-leaving .header {
+  opacity: 0;
+  filter: blur(6px);
+}
+
+/* phones: stack the hero */
+@media (max-width: 767px) {
+  .cs-iron .wrapper {
+    padding-inline: 1.1rem;
+  }
+  .cs-iron .preloader-mask {
+    -webkit-mask-size: auto, 180px;
+    mask-size: auto, 180px;
+  }
+  .cs-iron .preloader-logo p {
+    font-size: 0.78rem;
+  }
+  .cs-iron .hero-section {
+    padding-top: 84px;
+  }
+  .cs-iron .hero-frame {
+    aspect-ratio: auto;
+    min-height: 0;
+    max-height: none;
+    padding: 150px 18px 18px;
+    border-radius: 20px;
+  }
+  .cs-iron .hero-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .cs-iron .content-main h1 {
+    font-size: clamp(2.6rem, 14vw, 4rem) !important;
+  }
+  .cs-iron .hero-img img {
+    object-position: 72% 40%;
+  }
+}
+
+/* ═══════════ detail page ═══════════ */
+.csd {
+  position: relative;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 26px 2rem 120px;
+  color: rgba(255, 255, 255, 0.8);
+}
+.csd-top {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  height: 48px;
+  margin-bottom: 26px;
+  padding-right: 230px; /* room for the Back pill */
+}
+.csd-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  font-synthesis-weight: auto;
+  cursor: pointer;
+  transition: background 0.25s;
+}
+.csd-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+.csd-crumb {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.5);
+}
+.csd-crumb i {
+  margin: 0 6px;
+  font-style: normal;
+  color: rgba(255, 255, 255, 0.3);
+}
+.csd-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 21 / 9;
+  border-radius: 24px;
+  overflow: hidden;
+  background: #121826;
+  box-shadow: 0 50px 110px -50px rgba(10, 132, 255, 0.45);
+}
+.csd-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.csd-frame-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0) 40%);
+}
+.csd-head {
+  max-width: 920px;
+  margin: 46px 0 50px;
+}
+.csd-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.6);
+}
+.csd-chip {
+  padding: 5px 11px;
+  border-radius: 999px;
+  color: #0d1220;
+  background: #8cc6ff;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+.csd-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+}
+.csd-title {
+  margin-top: 20px;
+  font-size: clamp(1.5rem, 3.4vw, 3.1rem) !important;
+  font-weight: 400;
+  line-height: 1.18;
+  color: #fff;
+}
+.csd-word {
+  display: inline-block;
+  margin-right: 0.28em;
+  will-change: transform, opacity, filter;
+}
+.csd-lede {
+  margin-top: 20px;
+  max-width: 680px;
+  font-size: 14px;
+  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.72);
+}
+.csd-tags {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+}
+.csd-tags li {
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.8);
+}
+.csd-results {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+.csd-stat {
+  padding: 30px 24px 30px 0;
+}
+.csd-stat + .csd-stat {
+  padding-left: 24px;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+.csd-stat-v {
+  font-size: clamp(1.6rem, 3.2vw, 2.8rem);
+  line-height: 1.1;
+  color: #8cc6ff;
+}
+.csd-stat-l {
+  margin-top: 8px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.6);
+}
+.csd-sec {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 30px;
+  padding: 56px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.csd-k {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8cc6ff;
+}
+.csd-p {
+  max-width: 720px;
+  font-size: 15px;
+  line-height: 1.85;
+  color: rgba(255, 255, 255, 0.82);
+}
+.csd-steps {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.csd-steps li {
+  padding: 22px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.csd-step-n {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+}
+.csd-steps h3 {
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #fff;
+}
+.csd-steps p {
+  margin-top: 10px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.68);
+}
+.csd-cta {
+  grid-column: 2;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 8px;
+  background: #0071e3;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  font-synthesis-weight: auto;
+  cursor: pointer;
+  box-shadow: 0 10px 26px -12px rgba(10, 132, 255, 0.85);
+  transition: transform 0.25s, background-color 0.25s;
+}
+.csd-cta:hover {
+  transform: translateY(-2px);
+  background: #005bbf;
+}
+.csd-next {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  width: 100%;
+  margin-top: 60px;
+  padding: 16px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.3s, border-color 0.3s;
+}
+.csd-next:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 178, 122, 0.5);
+}
+.csd-next-img {
+  flex: 0 0 auto;
+  width: 200px;
+  aspect-ratio: 16 / 10;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #121826;
+}
+.csd-next-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.csd-next-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.csd-next-t {
+  font-size: clamp(14px, 1.6vw, 20px);
+  line-height: 1.35;
+}
+.csd-next-ico {
+  margin-left: auto;
+  flex: 0 0 auto;
+  color: #8cc6ff;
+}
+
+@media (max-width: 899px) {
+  .csd {
+    padding-inline: 1.1rem;
+  }
+  .csd-frame {
+    aspect-ratio: 4 / 3;
+  }
+  .csd-results,
+  .csd-steps {
+    grid-template-columns: 1fr;
+  }
+  .csd-stat + .csd-stat {
+    padding-left: 0;
+    border-left: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .csd-sec {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .csd-cta {
+    grid-column: 1;
+  }
+  .csd-next-img {
+    width: 110px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-iron.is-leaving .hero-section,
+  .cs-iron.is-leaving .cs-work-head,
+  .cs-iron.is-leaving .header {
+    opacity: 1;
+    filter: none;
+  }
+}@media (max-width: 639px) {
+  .csd-top { padding-right: 64px; } /* the Back pill is just an icon on phones */
+}

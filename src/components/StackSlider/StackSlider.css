@@ -1,0 +1,22 @@
+/* Purpose: Implement the StackSlider components module, keeping this responsibility separate for maintainability. */
+/* The slider now uses the site font (Michroma) like everything else; see src/typography.css. */
+.stack-slider-scope {
+  --font-display: "Michroma", "Eurostile", "Arial Black", sans-serif;
+  --font-sans: "Michroma", "Eurostile", "Arial Black", sans-serif;
+  --font-mono: "Michroma", "Eurostile", "Arial Black", sans-serif;
+  font-synthesis-weight: auto;
+}
+
+/* the global base layer forces buttons onto Michroma; undo that inside the slider */
+.stack-slider-scope button,
+.stack-slider-scope input,
+.stack-slider-scope textarea {
+  font-family: var(--font-sans);
+}
+
+.stack-slider-scope h1,
+.stack-slider-scope h2,
+.stack-slider-scope h3,
+.stack-slider-scope .font-display {
+  font-family: var(--font-display);
+}

@@ -1,0 +1,224 @@
+/* Purpose: Theme tokens (dark / light), utility classes and background for the Career overlay.
+   Import once in CareerOverlay.jsx:  import "./career.css";  */
+
+.ct-root {
+  --ct-bg: #07080c;
+  --ct-bg-rgb: 7, 8, 12;
+  --ct-fg-rgb: 255, 255, 255;
+  --ct-panel-rgb: 18, 24, 33;
+  --ct-accent: #0A84FF;
+  --ct-accent-ink: #0A84FF;
+  --ct-on-accent: #ffffff;
+  --ct-input-bg: rgba(0, 0, 0, 0.3);
+
+  /* Background (kept deliberately quiet) */
+  --ct-glow-rgb: 125, 145, 205;
+  --ct-glow-a: 0.14;
+  --ct-blob-a: #4b5b8c;
+  --ct-blob-b: #2c6f73;
+  --ct-blob-opacity: 0.2;
+  --ct-grid-a: 0.05;
+
+  background: var(--ct-bg);
+  color: rgb(var(--ct-fg-rgb));
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+.ct-root[data-theme="light"] {
+  --ct-bg: #f5f2ea;
+  --ct-bg-rgb: 245, 242, 234;
+  --ct-fg-rgb: 20, 22, 27;
+  --ct-panel-rgb: 255, 255, 255;
+  --ct-accent-ink: #0060c7;
+  --ct-input-bg: #ffffff;
+
+  --ct-glow-rgb: 255, 255, 255;
+  --ct-glow-a: 0.9;
+  --ct-blob-a: #cdd6f2;
+  --ct-blob-b: #cfe5df;
+  --ct-blob-opacity: 0.6;
+  --ct-grid-a: 0.06;
+}
+
+/* ---------- Text ---------- */
+.ct-ink { color: rgb(var(--ct-fg-rgb)); }
+.ct-soft { color: rgba(var(--ct-fg-rgb), 0.75); }
+.ct-mute { color: rgba(var(--ct-fg-rgb), 0.6); }
+.ct-faint { color: rgba(var(--ct-fg-rgb), 0.45); }
+.ct-accent-ink { color: var(--ct-accent-ink); }
+.ct-label { color: rgba(var(--ct-fg-rgb), 0.65); }
+
+/* ---------- Surfaces ---------- */
+.ct-surface {
+  background: rgba(var(--ct-fg-rgb), 0.03);
+  border: 1px solid rgba(var(--ct-fg-rgb), 0.12);
+  transition: background-color 0.5s ease, border-color 0.5s ease;
+}
+.ct-surface-soft {
+  background: rgba(var(--ct-fg-rgb), 0.025);
+  border: 1px solid rgba(var(--ct-fg-rgb), 0.1);
+  transition: background-color 0.5s ease, border-color 0.5s ease;
+}
+.ct-frame {
+  background: rgb(var(--ct-panel-rgb));
+  border: 1px solid rgba(var(--ct-fg-rgb), 0.12);
+  transition: background-color 0.5s ease, border-color 0.5s ease;
+}
+.ct-panel {
+  background: rgb(var(--ct-panel-rgb));
+  border: 1px solid rgba(10, 132, 255, 0.3);
+  transition: background-color 0.5s ease;
+}
+.ct-chip {
+  background: rgba(var(--ct-fg-rgb), 0.06);
+  border: 1px solid rgba(var(--ct-fg-rgb), 0.15);
+  transition: background-color 0.5s ease, border-color 0.5s ease, color 0.5s ease;
+}
+.ct-chip-btn {
+  transition: background-color 0.5s ease, border-color 0.5s ease, color 0.5s ease;
+}
+.ct-chip-btn:hover {
+  background: rgba(var(--ct-fg-rgb), 0.12);
+  color: rgb(var(--ct-fg-rgb));
+}
+
+/* Round floating buttons (close, theme switch, back) */
+.ct-fab {
+  background: rgba(var(--ct-fg-rgb), 0.1);
+  color: rgb(var(--ct-fg-rgb));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background-color 0.3s ease, color 0.5s ease;
+}
+.ct-fab:hover { background: rgba(var(--ct-fg-rgb), 0.2); }
+
+/* Deck arrows */
+.ct-arrow {
+  border: 1px solid rgba(var(--ct-fg-rgb), 0.15);
+  background: rgba(var(--ct-panel-rgb), 0.88);
+  color: rgb(var(--ct-fg-rgb));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform 0.2s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+.ct-arrow:hover {
+  background: #0A84FF;
+  border-color: #0A84FF;
+  color: #fff;
+  transform: scale(1.05);
+}
+
+/* Deck dots */
+.ct-dot {
+  background: rgba(var(--ct-fg-rgb), 0.25);
+  transition: background-color 0.5s ease;
+}
+.ct-dot:hover { background: rgba(var(--ct-fg-rgb), 0.5); }
+
+/* Form controls */
+.ct-input {
+  background: var(--ct-input-bg);
+  border: 1px solid rgba(var(--ct-fg-rgb), 0.16);
+  color: rgb(var(--ct-fg-rgb));
+  transition: background-color 0.5s ease, border-color 0.3s ease, color 0.5s ease;
+}
+.ct-input::placeholder { color: rgba(var(--ct-fg-rgb), 0.38); }
+.ct-input:focus { border-color: #0A84FF; outline: none; }
+.ct-dropzone {
+  border: 1px dashed rgba(var(--ct-fg-rgb), 0.25);
+  background: rgba(var(--ct-fg-rgb), 0.04);
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+.ct-dropzone:hover {
+  border-color: rgba(10, 132, 255, 0.7);
+  background: rgba(var(--ct-fg-rgb), 0.07);
+}
+
+/* Fade at the bottom of the list hero image */
+.ct-hero-fade {
+  background: linear-gradient(
+    to top,
+    var(--ct-bg) 0%,
+    rgba(var(--ct-bg-rgb), 0.4) 45%,
+    rgba(var(--ct-bg-rgb), 0) 100%
+  );
+}
+
+/* Soft dark shade at the bottom of the role image (also used by the flying image) */
+.ct-img-shade {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 55%);
+}
+
+/* ---------- Background: spotlight + faint blueprint grid + two slow, muted glows ---------- */
+.ct-bg-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ct-spot {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    70% 55% at 50% 0%,
+    rgba(var(--ct-glow-rgb), var(--ct-glow-a)) 0%,
+    transparent 70%
+  );
+}
+
+.ct-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(110px);
+  opacity: var(--ct-blob-opacity);
+  transition: background-color 1.2s ease;
+  will-change: transform;
+}
+.ct-blob--a {
+  width: 52vmax; height: 52vmax; left: -18vmax; top: -24vmax;
+  background-color: var(--ct-blob-a);
+  animation: ct-drift-a 60s ease-in-out infinite alternate;
+}
+.ct-blob--b {
+  width: 46vmax; height: 46vmax; right: -22vmax; top: 34vh;
+  background-color: var(--ct-blob-b);
+  animation: ct-drift-b 72s ease-in-out infinite alternate;
+}
+
+@keyframes ct-drift-a {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(8vw, 6vh, 0) scale(1.08); }
+}
+@keyframes ct-drift-b {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(-8vw, -5vh, 0) scale(1.06); }
+}
+
+.ct-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(var(--ct-fg-rgb), var(--ct-grid-a)) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--ct-fg-rgb), var(--ct-grid-a)) 1px, transparent 1px);
+  background-size: 72px 72px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 0%, transparent 100%);
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 0%, transparent 100%);
+}
+
+/* ---------- Theme wipe (View Transitions API) ----------
+   useCareerTheme.js animates ::view-transition-new(root) with a growing circle clip-path.
+   The default cross-fade is switched off so only the circular reveal is visible. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) { z-index: 1; }
+::view-transition-new(root) { z-index: 2; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-blob { animation: none; }
+}

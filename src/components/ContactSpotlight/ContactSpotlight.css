@@ -1,0 +1,82 @@
+/* Purpose: Implement the ContactSpotlight components module, keeping this responsibility separate for maintainability. */
+/* Contact Spotlight: Key Facts palette (white -> #D2D2D2, ink #434343).
+   White at the top continues the FAQ above, #D2D2D2 at the bottom continues into the footer. */
+.contact-spotlight .spotlight {
+  position: relative;
+  width: 100%;
+  height: 90svh;
+  overflow: hidden;
+  background: linear-gradient(180deg, #ffffff 0%, #ffffff 56%, #d2d2d2 100%);
+}
+
+.contact-spotlight .spotlight-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 1.5rem 3vw;
+  background-color: #ffffff;
+  transform-origin: bottom center;
+  will-change: transform;
+}
+
+.contact-spotlight .spotlight-header svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  fill: #434343;
+}
+
+.contact-spotlight .i-button {
+  pointer-events: none; /* only clickable once it has become the button */
+  outline: none;
+}
+.contact-spotlight .i-button.is-ready {
+  pointer-events: auto;
+  cursor: pointer;
+}
+.contact-spotlight .i-button path,
+.contact-spotlight .i-button rect {
+  transition: fill 0.35s ease, opacity 0.35s ease, filter 0.35s ease;
+}
+/* once the "I" has become the button it keeps its grey; hover / tap / focus turns it brand blue (was green) */
+.contact-spotlight .i-button.is-ready path {
+  opacity: 0;
+}
+.contact-spotlight .i-button.is-ready:hover rect,
+.contact-spotlight .i-button.is-ready:active rect,
+.contact-spotlight .i-button.is-ready:focus-visible rect {
+  fill: #0071e3;
+  filter: drop-shadow(0 0 22px rgba(10, 132, 255, 0.55));
+}
+.contact-spotlight .i-button.is-ready:hover .i-link-text,
+.contact-spotlight .i-button.is-ready:focus-visible .i-link-text {
+  fill: #fff;
+}
+
+.contact-spotlight .i-link-text {
+  fill: #fff;
+  text-anchor: middle;
+  dominant-baseline: central;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-synthesis-weight: auto; /* Michroma has one weight: let the browser embolden it */
+  font-size: 52px;
+  letter-spacing: 1px;
+  pointer-events: none;
+  transition: fill 0.3s ease;
+}
+
+/* phones: shorter section, so the CLICK → button reveal does not leave a long empty stretch */
+@media (max-width: 767px) {
+  .contact-spotlight .spotlight { height: 52svh; min-height: 360px; }
+}
+@media (min-width: 768px) and (max-width: 999px) {
+  .contact-spotlight .spotlight { height: 62svh; }
+}
+@media (max-width: 999px) {
+  .contact-spotlight .spotlight-header {
+    padding-top: 2rem;
+  }
+}

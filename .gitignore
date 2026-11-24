@@ -1,0 +1,9 @@
+# Purpose: Keep generated files, local dependencies, and secrets out of version control.
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example

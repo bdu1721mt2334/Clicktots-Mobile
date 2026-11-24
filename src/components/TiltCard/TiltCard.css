@@ -1,0 +1,20 @@
+/* Purpose: Implement the TiltCard components module, keeping this responsibility separate for maintainability. */
+/* TiltCard: leans toward the pointer in 3D, with a soft light sheen that follows it
+   and the picture drifting slightly behind. Pointer values are written as CSS
+   variables straight to the element, so moving the pointer never re-renders.
+   Reduced motion and touch: the card stays flat. */
+.fd-tc,.fd-tc *,.fd-tc *::before,.fd-tc *::after{box-sizing:border-box}
+.fd-tc{--fd-tc-radius:16px;--fd-ease-out:cubic-bezier(0.22,1,0.36,1);display:block;width:100%;margin:0;padding:0;perspective:900px;color:#fff}
+.fd-tc-card{position:relative;display:block;width:100%;margin:0;padding:0;border:0;text-align:left;cursor:pointer;color:inherit;font:inherit;border-radius:var(--fd-tc-radius);overflow:hidden;background:linear-gradient(160deg,#2a2f3a,#12151c);box-shadow:0 1px 2px rgba(0,0,0,.1),0 22px 40px -16px rgba(0,0,0,.6);transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(1);transition:transform 700ms var(--fd-ease-out),box-shadow 700ms var(--fd-ease-out);transform-style:preserve-3d;will-change:transform}
+.fd-tc-card:focus-visible{outline:2px solid rgba(255,255,255,.85);outline-offset:4px}
+.fd-tc-card[data-live]{transform:rotateX(var(--rx)) rotateY(var(--ry)) scale(1.03);transition:transform 120ms linear,box-shadow 300ms;box-shadow:0 1px 2px rgba(0,0,0,.1),0 34px 50px -18px rgba(0,0,0,.75)}
+.fd-tc-photo{position:absolute;inset:-14px;display:block;margin:0;padding:0;transform:translate3d(var(--px,0px),var(--py,0px),0);transition:transform 700ms var(--fd-ease-out)}
+.fd-tc-card[data-live] .fd-tc-photo{transition:transform 120ms linear}
+.fd-tc-img{position:absolute;inset:0;display:block;width:100%;height:100%;margin:0;padding:0;border:0;object-fit:cover;pointer-events:none}
+.fd-tc-shade{position:absolute;inset:0;display:block;background:linear-gradient(to top,rgba(0,0,0,.8),rgba(0,0,0,.2) 55%,transparent);pointer-events:none}
+.fd-tc-sheen{position:absolute;inset:0;display:none;pointer-events:none;opacity:0;background:radial-gradient(420px circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,.32),transparent 60%);mix-blend-mode:soft-light;transition:opacity 400ms}
+.fd-tc-card[data-sheen] .fd-tc-sheen{display:block}
+.fd-tc-card[data-live] .fd-tc-sheen{opacity:1}
+.fd-tc-content{position:absolute;inset:0;display:block;transform:translateZ(30px)}
+@media (prefers-reduced-motion:reduce){.fd-tc-card,.fd-tc-photo{transition:none;transform:none!important}}
+@media (hover:none){.fd-tc-card,.fd-tc-photo{transform:none!important}}

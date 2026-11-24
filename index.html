@@ -1,0 +1,50 @@
+<!-- Purpose: Provide the browser document shell in which the React application mounts. -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#05070c" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <title>Clicktots Technologies · AI-Powered Digital Marketing Agency in Chennai</title>
+    <meta name="description" content="Clicktots is an AI-powered digital marketing agency in Chennai: conversion websites, predictive SEO &amp; AEO, generative design, branding and performance marketing engineered as one growth system." />
+    <meta property="og:title" content="Clicktots Technologies · AI-Powered Digital Marketing Agency in Chennai" />
+    <meta property="og:description" content="Clicktots is an AI-powered digital marketing agency in Chennai: conversion websites, predictive SEO &amp; AEO, generative design, branding and performance marketing engineered as one growth system." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <!-- Michroma, self-hosted (one 20 KB file, no render-blocking Google Fonts request) -->
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/michroma-latin-400.woff2" crossorigin />
+    <style>
+      @font-face {
+        font-family: "Michroma";
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url("/fonts/michroma-latin-400.woff2") format("woff2");
+      }
+      html, body { background: #05070c; }
+      #ct-prehero { position: absolute; left: 0; top: 0; width: 100%; height: 100vh; height: 100svh; z-index: 45; background: #05070c; pointer-events: none; transition: opacity 0.7s ease; }
+      #ct-prehero img { display: block; width: 100%; height: calc(100% - 2px); object-fit: cover; object-position: center top; }
+      #ct-prehero.is-out { opacity: 0; }
+    </style>
+    <link rel="preload" as="image" href="/layers/d/hero-poster.webp" media="(min-width: 768px)" fetchpriority="high" />
+    <link rel="preload" as="image" href="/layers/m/hero-poster.webp" media="(max-width: 767px)" fetchpriority="high" />
+  </head>
+  <body>
+    <!-- First frame of the hero, painted straight from the HTML (no JavaScript needed): a still of the real
+         hero (public/layers/{d,m}/hero-poster.webp – re-capture it if the hero's look changes).
+         It is the page's Largest Contentful Paint, so PageSpeed no longer waits for the app bundle.
+         App.jsx fades it out once the real hero (same picture underneath) has faded in.
+         Chrome never counts a picture that covers the WHOLE viewport as LCP (it treats it as a background),
+         so it is absolute (not fixed) and 2px short of the bottom edge – invisible on the dark background. -->
+    <div id="ct-prehero" aria-hidden="true">
+      <picture>
+        <source media="(max-width: 767px)" srcset="/layers/m/hero-poster.webp" />
+        <img src="/layers/d/hero-poster.webp" alt="" fetchpriority="high" width="2400" height="1350" />
+      </picture>
+    </div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

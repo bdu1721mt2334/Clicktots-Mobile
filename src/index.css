@@ -1,0 +1,249 @@
+/* Purpose: Implement the index index.css module, keeping this responsibility separate for maintainability. */
+@import "tailwindcss";
+
+/* Hover colours also play on phones / tablets. Tailwind 4 limits `hover:` (and `group-hover:`) to mouse
+   devices; here they also match while a finger is pressing (:active), so a tap shows the same colour change. */
+@custom-variant hover (&:hover, &:active);
+
+/* ---- Selene Earthrise hero (tokens are namespaced; no existing font/colour is overridden) ---- */
+@theme {
+  /* One font stack for the whole site: the exact stack used by the hero line
+     "Creativity start with Click" (order matters: Michroma → Eurostile → Arial Black → sans-serif).
+     Every Tailwind family utility (font-sans / font-serif / font-mono / font-hero /
+     font-telemetry) resolves to it, so nothing falls back to another typeface. */
+  --font-hero: "Michroma", "Eurostile", "Arial Black", sans-serif;
+  --font-sans: "Michroma", "Eurostile", "Arial Black", sans-serif;
+  --font-serif: "Michroma", "Eurostile", "Arial Black", sans-serif;
+  --font-mono: "Michroma", "Eurostile", "Arial Black", sans-serif;
+  --font-telemetry: "Michroma", "Eurostile", "Arial Black", sans-serif;
+
+  --color-void: #05070c;
+  --color-regolith: #c9ccd3;
+  --color-earth: #6fb6ff;
+
+  --text-label: 0.6875rem;
+  --text-label--line-height: 1.3;
+  --text-label--letter-spacing: 0.16em;
+}
+
+@layer base {
+  /* Same stack on the root, and on form controls (they don't inherit by default). */
+  html,
+  body,
+  button,
+  input,
+  textarea,
+  select {
+    font-family: "Michroma", "Eurostile", "Arial Black", sans-serif;
+  }
+  /* Michroma ships a single (regular) weight: don't let the browser smear a fake bold. */
+  html {
+    font-synthesis-weight: none;
+  }
+}
+
+@layer utilities {
+  .h-screen-s {
+    height: 100svh;
+  }
+
+  /* HUD corner brackets. */
+  .brackets {
+    background:
+      linear-gradient(currentColor, currentColor) top left / 14px 1px,
+      linear-gradient(currentColor, currentColor) top left / 1px 14px,
+      linear-gradient(currentColor, currentColor) top right / 14px 1px,
+      linear-gradient(currentColor, currentColor) top right / 1px 14px,
+      linear-gradient(currentColor, currentColor) bottom left / 14px 1px,
+      linear-gradient(currentColor, currentColor) bottom left / 1px 14px,
+      linear-gradient(currentColor, currentColor) bottom right / 14px 1px,
+      linear-gradient(currentColor, currentColor) bottom right / 1px 14px;
+    background-repeat: no-repeat;
+  }
+}
+
+/* Lenis base styles */
+html.lenis, html.lenis body { height: auto; }
+.lenis:not(.lenis-autoToggle).lenis-stopped { overflow: clip; }
+/* Lenis' default hides the page scrollbar while stopped (About page open). That
+   changes the viewport width mid-animation and forces a full-page relayout at the
+   click = the "stuck" zoom. Keep the scrollbar; Lenis still blocks wheel scrolling. */
+html.lenis.lenis-stopped { overflow: visible; }
+.lenis.lenis-smooth iframe { pointer-events: none; }
+
+/* Page open: the hero eases in (opacity only, so sticky / fixed children are untouched). */
+@keyframes ct-hero-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.ct-hero-in {
+  animation: ct-hero-in 1.8s cubic-bezier(0.22, 1, 0.36, 1) 0.2s backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ct-hero-in { animation: none; }
+}
+
+/* ═══ Back pill on inner pages (components/BackButton): top-right, where the old X was ═══ */
+.ct-back {
+  position: absolute;
+  z-index: 250;
+  top: 20px;
+  right: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 16px 0 5px;
+  border-radius: var(--ct-btn-radius);
+  font-size: 10.5px;
+  font-weight: 700;
+  font-synthesis-weight: auto;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  backdrop-filter: blur(14px) saturate(150%);
+  transition: background-color 0.25s, border-color 0.25s, transform 0.2s;
+}
+@media (min-width: 640px) { .ct-back { top: 26px; right: 32px; } }
+.ct-back:active { transform: scale(0.96); }
+.ct-back:focus-visible { outline: 2px solid #0a84ff; outline-offset: 3px; }
+.ct-back-dark { color: #fff; background: rgba(10, 12, 18, 0.45); border: 1px solid rgba(255, 255, 255, 0.16); box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6); }
+.ct-back-dark:hover { background: rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.3); }
+.ct-back-light { color: #10151c; background: rgba(255, 255, 255, 0.6); border: 1px solid rgba(16, 21, 28, 0.12); box-shadow: 0 10px 30px -14px rgba(20, 40, 70, 0.35); }
+.ct-back-light:hover { background: rgba(255, 255, 255, 0.85); }
+.ct-back-icon { position: relative; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 6px; overflow: hidden; background: rgba(255, 255, 255, 0.14); }
+.ct-back-light .ct-back-icon { background: rgba(16, 21, 28, 0.08); }
+.ct-back-a, .ct-back-b { grid-area: 1 / 1; transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1); }
+.ct-back-b { transform: translateX(150%); }
+.ct-back:hover .ct-back-a { transform: translateX(-150%); }
+.ct-back:hover .ct-back-b { transform: translateX(0); }
+@media (max-width: 639px) { .ct-back-label { display: none; } .ct-back { padding: 0 5px; } }
+@media (prefers-reduced-motion: reduce) { .ct-back, .ct-back-a, .ct-back-b { transition: none; } }
+
+/* ═══ CTA arrow chip (Navbar "Talk to Our Experts"): the arrow leaves top-right, a copy slides in from bottom-left ═══ */
+.ct-cta-chip { position: relative; z-index: 10; display: grid; place-items: center; flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; overflow: hidden; background: rgba(255, 255, 255, 0.22); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28); transition: background-color 0.3s; }
+.ct-cta-chip svg { grid-area: 1 / 1; transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+.ct-cta-chip .ct-cta-b { transform: translate(-140%, 140%); }
+.group:hover .ct-cta-chip { background: #fff; }
+.group:hover .ct-cta-chip svg { color: #0a6cff; }
+.group:hover .ct-cta-chip .ct-cta-a { transform: translate(140%, -140%); }
+.group:hover .ct-cta-chip .ct-cta-b { transform: translate(0, 0); }
+@media (prefers-reduced-motion: reduce) { .ct-cta-chip svg { transition: none; } }
+
+/* inner-page controls just under the Back pill on the right (e.g. Career theme toggle) */
+.ct-under-nav { top: 72px; }
+@media (min-width: 640px) { .ct-under-nav { top: 80px; } }
+
+/* Navbar while scrolling: plain frosted glass instead of the costly SVG refraction (see Navbar.jsx) */
+.ct-nav { will-change: transform; }
+.ct-nav.is-scrolling .fd-lg { --fd-lg-url: blur(0px) !important; }
+
+/* Hero tagline ("Growth starts with an Intelligent Click"): bolder + a touch larger on phones / tablets.
+   Michroma ships one weight, so a hairline stroke thickens the strokes cleanly on every engine. */
+@media (max-width: 1023px) {
+  .ct-hero-title {
+    font-weight: 700 !important;
+    font-size: clamp(1.2rem, 5.4vw, 2.4rem) !important;
+    -webkit-text-stroke: 0.6px currentColor;
+    letter-spacing: 0.01em;
+  }
+}
+
+/* mobile / tablet nav drawer: ultra glass */
+.ct-ultra-glass {
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 38%, rgba(255, 255, 255, 0.02) 100%),
+    rgba(10, 13, 20, 0.42);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  backdrop-filter: blur(30px) saturate(180%);
+  border-left: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow:
+    inset 1px 0 0 rgba(255, 255, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    -24px 0 60px -20px rgba(0, 0, 0, 0.65);
+}
+
+/* ═══ Buttons, site-wide ═══
+   One shape for every button except the navbar's blue "Talk to Our Experts" capsule: the 8px corner of the
+   Projects buttons. Labels are bold. Michroma ships a single weight and body text keeps font-synthesis off,
+   so bold is synthesised for buttons only. Brand blue is the primary colour everywhere.
+   Variants: .ct-btn-primary (blue) · .ct-btn-light (white) · .ct-btn-ghost (on dark) · .ct-btn-ghost-ink (on light) */
+:root {
+  --ct-blue: #0a84ff; /* accents, glows, borders, text on dark */
+  --ct-blue-btn: #0071e3; /* filled buttons: white label at 4.7:1 contrast (AA) – #0a84ff only reaches 3.65:1 */
+  --ct-blue-hover: #005bbf;
+  --ct-btn-radius: 8px;
+}
+button,
+.ct-btn {
+  font-synthesis-weight: auto;
+}
+.ct-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  border-radius: var(--ct-btn-radius);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+.ct-btn:active { transform: scale(0.97); }
+.ct-btn:focus-visible { outline: 2px solid var(--ct-blue); outline-offset: 3px; }
+.ct-btn:disabled { opacity: 0.4; pointer-events: none; }
+.ct-btn-primary { background: var(--ct-blue-btn); color: #fff; border: 1px solid var(--ct-blue-btn); box-shadow: 0 10px 26px -12px rgba(10, 132, 255, 0.85); }
+.ct-btn-primary:hover { background: var(--ct-blue-hover); border-color: var(--ct-blue-hover); box-shadow: 0 14px 34px -12px rgba(10, 132, 255, 0.95); }
+.ct-btn-light { background: #fff; color: #0b0c0e; border: 1px solid #fff; }
+.ct-btn-light:hover { background: var(--ct-blue-btn); border-color: var(--ct-blue-btn); color: #fff; }
+.ct-btn-ghost { background: rgba(255, 255, 255, 0.04); color: #fff; border: 1px solid rgba(255, 255, 255, 0.28); }
+.ct-btn-ghost:hover { background: rgba(10, 132, 255, 0.16); border-color: var(--ct-blue); }
+.ct-btn-ghost-ink { background: transparent; color: rgba(0, 0, 0, 0.78); border: 1px solid rgba(0, 0, 0, 0.2); }
+.ct-btn-ghost-ink:hover { color: var(--ct-blue); border-color: var(--ct-blue); background: rgba(10, 132, 255, 0.06); }
+
+/* arrows travel in their own direction on hover (any button, and the .ct-arrow-move helper) */
+:is(.ct-btn, .ct-arrow-move, .ft-cta, .bl-btn, .csd-btn, .csd-cta, .rk-result-cta, .rk-result-more, .hero-scroll) svg {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+:is(.ct-btn, .ct-arrow-move, .ft-cta, .bl-btn, .csd-cta, .rk-result-cta):hover .lucide-arrow-up-right { transform: translate(3px, -3px); }
+:is(.ct-btn, .ct-arrow-move, .ft-cta, .bl-btn, .csd-cta, .rk-result-cta):hover .lucide-arrow-right { transform: translateX(4px); }
+:is(.ct-btn, .ct-arrow-move, .bl-btn, .csd-btn):hover .lucide-arrow-left { transform: translateX(-4px); }
+:is(.ct-btn, .ct-arrow-move, .hero-scroll):hover .lucide-arrow-down { transform: translateY(3px); }
+:is(.ct-btn, .ct-arrow-move):hover .lucide-arrow-up { transform: translateY(-3px); }
+/* touch screens: the same move plays while the finger is down */
+@media (hover: none) {
+  :is(.ct-btn, .ct-arrow-move, .ft-cta, .bl-btn, .csd-cta, .rk-result-cta):active .lucide-arrow-up-right { transform: translate(3px, -3px); }
+  :is(.ct-btn, .ct-arrow-move, .ft-cta, .bl-btn, .csd-cta, .rk-result-cta):active .lucide-arrow-right { transform: translateX(4px); }
+  :is(.ct-btn, .ct-arrow-move, .hero-scroll):active .lucide-arrow-down { transform: translateY(3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ct-btn, .ct-btn svg { transition: none; }
+}
+
+/* phones: normal-sized buttons (the desktop padding / type made them look oversized) */
+@media (max-width: 639px) {
+  .ct-btn,
+  .ft-cta,
+  .bl-btn,
+  .csd-cta,
+  .rk-result-cta {
+    padding: 0.5rem 0.8rem !important;
+    font-size: 8.5px !important;
+    line-height: 1.2 !important;
+    min-height: 0 !important;
+    gap: 0.45em !important;
+    letter-spacing: 0.04em !important;
+    max-width: 100%;
+  }
+  .ct-btn svg,
+  .ft-cta svg,
+  .bl-btn svg,
+  .csd-cta svg,
+  .rk-result-cta svg {
+    width: 11px !important;
+    height: 11px !important;
+  }
+}

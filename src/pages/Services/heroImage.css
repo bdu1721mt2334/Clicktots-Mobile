@@ -1,0 +1,276 @@
+/* Hero picture extras on a service page (HeroImage.jsx): glass tag, spinning text seal, launch rocket. */
+.hi-tag {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 13px 7px 10px;
+  border-radius: 99px;
+  background: rgba(10, 14, 17, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.hi-tag i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.hi-tag b {
+  font-weight: 400;
+  opacity: 0.6;
+}
+
+.hi-seal {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 2;
+  width: 112px;
+  height: 112px;
+}
+.hi-seal-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(10, 14, 17, 0.42);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  animation: hi-spin 18s linear infinite;
+}
+.hi-seal-ring text {
+  fill: #fff;
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+}
+.hi-seal-core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  border-radius: 50%;
+  background: var(--c);
+  color: #10291a;
+  box-shadow: 0 0 24px var(--c);
+}
+@keyframes hi-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* the small rocket the scroll story takes off from */
+.hi-rocket {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 13px 5px 5px;
+  border-radius: 99px;
+  background: rgba(10, 14, 17, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.hi-rocket-ship {
+  display: block;
+  width: 15px;
+  height: 40px;
+  margin: 0 4px 0 6px;
+  filter: drop-shadow(0 0 6px var(--c));
+  animation: hi-bob 2.4s ease-in-out infinite;
+}
+.hi-rocket-ship .rk-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+@keyframes hi-bob {
+  50% {
+    translate: 0 -3px;
+  }
+}
+@media (max-width: 640px) {
+  .hi-seal {
+    width: 90px;
+    height: 90px;
+  }
+  .hi-rocket > span:last-child {
+    display: none;
+  }
+  .hi-rocket {
+    padding: 5px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hi-seal-ring,
+  .hi-rocket-ship {
+    animation: none;
+  }
+}
+
+/* ── "scroll to launch" prompt at the bottom of the service hero ── */
+.rk-cue {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(14px, 3vh, 28px);
+  z-index: 3;
+  transform: translateX(-50%);
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+.rk-cue-body {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px 10px 12px;
+  border-radius: 99px;
+  color: #1a1d1f;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 14px 34px -16px rgba(0, 0, 0, 0.35), 0 0 0 4px color-mix(in srgb, var(--c) 18%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  animation: rk-cue-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) 1.6s both;
+}
+.rk-cue-mouse {
+  position: relative;
+  flex: none;
+  width: 22px;
+  height: 34px;
+  border-radius: 12px;
+  border: 2px solid #1a1d1f;
+}
+.rk-cue-mouse i {
+  position: absolute;
+  left: 50%;
+  top: 6px;
+  width: 4px;
+  height: 7px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: var(--c);
+  animation: rk-cue-wheel 1.6s ease-in-out infinite;
+}
+.rk-cue-t {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.rk-cue-t small {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: rgba(26, 29, 31, 0.6);
+}
+.rk-cue-arrows {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.rk-cue-arrows b {
+  width: 9px;
+  height: 9px;
+  margin-top: -3px;
+  border-right: 2px solid var(--c);
+  border-bottom: 2px solid var(--c);
+  transform: rotate(45deg);
+  animation: rk-cue-arrow 1.6s ease-in-out infinite;
+}
+.rk-cue-arrows b:nth-child(2) {
+  animation-delay: 0.2s;
+}
+@keyframes rk-cue-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes rk-cue-wheel {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  70% {
+    transform: translateY(11px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+}
+@keyframes rk-cue-arrow {
+  0%,
+  100% {
+    opacity: 0.25;
+    translate: 0 -2px;
+  }
+  50% {
+    opacity: 1;
+    translate: 0 3px;
+  }
+}
+/* the rocket pill in the picture pulses so it reads as "this is what launches" */
+.hi-rocket {
+  animation: hi-pulse 2.2s ease-in-out infinite 2s;
+}
+@keyframes hi-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--c) 0%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--c) 35%, transparent);
+  }
+}
+@media (max-width: 640px) {
+  .rk-cue-body {
+    gap: 10px;
+    padding: 8px 14px 8px 10px;
+  }
+  .rk-cue-t {
+    font-size: 10.5px;
+  }
+  .rk-cue-t small {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rk-cue-body,
+  .rk-cue-mouse i,
+  .rk-cue-arrows b,
+  .hi-rocket {
+    animation: none;
+  }
+}

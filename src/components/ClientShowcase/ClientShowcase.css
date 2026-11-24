@@ -1,0 +1,332 @@
+/* Purpose: Implement the ClientShowcase components module, keeping this responsibility separate for maintainability. */
+/* ---------- Client showcase: full page, white → black on scroll ---------- */
+.cs-section {
+  --cs-p: 0;
+  /* 0 = white (Services), 1 = black; set by scroll in the JS */
+  position: relative;
+  z-index: 30;
+  width: 100%;
+  height: 100svh;
+  min-height: 560px;
+  padding: 0;
+  overflow: hidden;
+  background: color-mix(in srgb, #fff calc((1 - var(--cs-p)) * 100%), #000);
+}
+
+.cs-bezel {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.cs-arena {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 560px;
+  overflow: hidden;
+  /* balls rain in from above the screen */
+  border-radius: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* soft dark glow that fades in with the black */
+.cs-arena::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 0%, #121212 0%, #000 60%);
+  opacity: var(--cs-p);
+}
+
+/* animated background (canvas or video) */
+.cs-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  object-fit: cover;
+  opacity: var(--cs-p);
+  /* fades in together with the white → black change */
+}
+
+/* ---------- title ---------- */
+.cs-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  margin: 0;
+  padding: 0 8%;
+  text-align: center;
+  color: #f4f4f4;
+  font-weight: 400;
+  font-size: clamp(1.2rem, 3vw, 2.6rem);
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+}
+
+.cs-heading {
+  margin: 0;
+  font: inherit;
+}
+
+.cs-sub {
+  max-width: 34rem;
+  margin: 1.1rem auto 0;
+  font-size: clamp(0.78rem, 1.05vw, 0.95rem);
+  line-height: 1.6;
+  letter-spacing: 0;
+  color: rgba(244, 244, 244, 0.62);
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.cs-in .cs-sub {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.9s ease 0.6s, transform 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.6s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-sub {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* same masked word-rise as the Services sentence */
+.cs-word {
+  display: inline-block;
+  overflow: hidden;
+  padding: 0.08em 0.04em 0.16em;
+  margin: -0.08em -0.04em -0.16em;
+  vertical-align: baseline;
+}
+
+.cs-rise {
+  display: inline-block;
+  transform: translateY(118%);
+}
+
+.cs-in .cs-rise {
+  transform: translateY(0);
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1) var(--d, 0s);
+}
+
+.cs-in .cs-rise {
+  transform: translateY(0);
+}
+
+/* hover reaction: letters move away from the cursor and glow like the network lines */
+.cs-ch {
+  display: inline-block;
+  --g: 0;
+  color: color-mix(in srgb, #9ec1ff calc(var(--g) * 100%), #f4f4f4);
+  text-shadow:
+    0 0 calc(var(--g) * 18px) rgba(120, 170, 255, calc(var(--g) * 0.9)),
+    0 0 calc(var(--g) * 40px) rgba(120, 170, 255, calc(var(--g) * 0.5));
+  will-change: transform;
+}
+
+/* once the rise has finished, let letters travel outside the mask */
+.cs-ready .cs-word {
+  overflow: visible;
+}
+
+/* ---------- ball ---------- */
+.cs-ball {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  visibility: hidden;
+  cursor: grab;
+  touch-action: none;
+  will-change: transform;
+}
+
+.cs-ball.cs-held {
+  cursor: grabbing;
+}
+
+.cs-face {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #2b2b2b;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  transition: background 0.4s ease, box-shadow 0.45s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cs-logo-box {
+  position: relative;
+  width: var(--lw);
+  height: var(--lh);
+  display: block;
+}
+
+.cs-logo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* default: plain white logo */
+.cs-logo-white {
+  opacity: 0.95;
+}
+
+img.cs-logo-white {
+  filter: brightness(0) invert(1);
+}
+
+.cs-logo-color {
+  opacity: 0;
+  transform: scale(0.92);
+}
+
+/* light that sweeps in over the logo */
+.cs-light {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 46%),
+    radial-gradient(circle at 50% 50%, transparent 55%, color-mix(in srgb, var(--glow) 22%, transparent) 100%);
+  transition: opacity 0.45s ease;
+}
+
+/* hover OR held: the real logo lights up */
+.cs-ball:hover .cs-face,
+.cs-ball.cs-held .cs-face,
+.cs-ball.cs-lit .cs-face {
+  background: radial-gradient(circle at 50% 42%, var(--hover-bg) 0%, var(--hover-bg) 70%, color-mix(in srgb, var(--hover-bg) 88%, #888) 100%);
+  transform: scale(1.06);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.85),
+    0 0 34px 6px color-mix(in srgb, var(--glow) 70%, transparent),
+    0 0 90px 22px color-mix(in srgb, var(--glow) 38%, transparent);
+}
+
+.cs-ball:hover .cs-logo-white,
+.cs-ball.cs-held .cs-logo-white,
+.cs-ball.cs-lit .cs-logo-white {
+  opacity: 0;
+}
+
+.cs-ball:hover .cs-logo-color,
+.cs-ball.cs-held .cs-logo-color,
+.cs-ball.cs-lit .cs-logo-color {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.cs-ball:hover .cs-light,
+.cs-ball.cs-held .cs-light,
+.cs-ball.cs-lit .cs-light {
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+
+  .cs-section,
+  .cs-arena {
+    min-height: 620px;
+  }
+}
+
+/* short copy + tap hint: phones / tablets only (desktop keeps the full line and hover) */
+.cs-sub-short,
+.cs-hint { display: none; }
+@media (max-width: 1023px) {
+  .cs-hint {
+    position: absolute;
+    left: 50%;
+    top: clamp(84px, 13svh, 120px);
+    z-index: 1;
+    pointer-events: none;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0.45rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.66rem;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+    color: rgba(244, 244, 244, 0.85);
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  .cs-in .cs-hint {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    transition: opacity 0.9s ease 0.9s, transform 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.9s;
+  }
+  .cs-hint-hand {
+    flex: none;
+    color: #5eb0ff;
+    animation: cs-hint-tap 1.6s ease-in-out infinite;
+  }
+  .cs-hint-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #0a84ff;
+    box-shadow: 0 0 0 0 rgba(10, 132, 255, 0.6);
+    animation: cs-hint-pulse 1.8s ease-out infinite;
+  }
+}
+@keyframes cs-hint-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(10, 132, 255, 0.6); }
+  100% { box-shadow: 0 0 0 9px rgba(10, 132, 255, 0); }
+}
+@media (max-width: 767px) {
+  .cs-title { font-size: 1.15rem; padding: 0 7%; }
+  .cs-sub-full { display: none; }
+  .cs-sub-short { display: block; max-width: 17rem; margin-top: 0.8rem; font-size: 0.74rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-rise {
+    transition: none;
+    transform: none;
+  }
+
+  .cs-face,
+  .cs-logo,
+  .cs-light {
+    transition: none;
+  }
+}
+/* the hand on the "Tap a ball" hint taps gently */
+@keyframes cs-hint-tap {
+  0%, 100% { transform: translateY(0) scale(1); }
+  40% { transform: translateY(2px) scale(0.88); }
+  60% { transform: translateY(0) scale(1); }
+}

@@ -1,0 +1,171 @@
+/* Purpose: Implement the KeyFacts pages module, keeping this responsibility separate for maintainability. */
+/* ───────── Key Facts ─────────
+   Typography + small effects that are awkward as utility classes.
+   Layout itself lives in KeyFacts.jsx (Tailwind). */
+
+.kf-root {
+  --kf-dark: #434343;
+  --kf-light: #d8d8d8;
+  --kf-cream: #e6e4e2;
+  --kf-line: #9c9c9c;
+  font-family: "Michroma", "Eurostile", "Arial Black", sans-serif;
+  color: var(--kf-dark);
+}
+
+/* Section title: matches the reference h2 scale */
+.kf-h2 {
+  margin: 0;
+  font-weight: 500;
+  color: var(--kf-dark);
+  font-size: clamp(1.9rem, 3.6vw, 3.25rem);
+  line-height: clamp(2rem, 3.9vw, 3.5rem);
+  letter-spacing: -0.06em;
+}
+
+/* Small uppercase labels ("projects completed", card titles) */
+.kf-title {
+  font-weight: 500;
+  font-size: 0.8rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+@media (min-width: 64rem) {
+  .kf-title {
+    font-size: 0.85rem;
+  }
+}
+
+/* Body copy under titles / inside cards */
+.kf-small {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+@media (min-width: 64rem) {
+  .kf-small {
+    font-size: 0.85rem;
+  }
+}
+
+
+/* Big numbers */
+.kf-number {
+  font-weight: 500;
+  font-size: 2.6rem;
+  line-height: 1.1;
+  letter-spacing: -0.06em;
+  font-variant-numeric: tabular-nums;
+}
+.kf-plus {
+  font-size: 1.4rem;
+  line-height: 1;
+  letter-spacing: -0.06em;
+  margin-left: -0.15rem;
+  padding-top: 0.25rem;
+}
+@media (min-width: 80rem) {
+  .kf-plus {
+    font-size: 1.3rem;
+  }
+}
+
+/* Rolling digit counter: every digit is a 0-9 column that slides up */
+.kf-roll {
+  display: inline-flex;
+  padding-right: 0.5rem;
+}
+.kf-static {
+  display: inline-block;
+  height: 1.1em;
+}
+.kf-digit {
+  display: inline-block;
+  height: 1.1em;
+  overflow: hidden;
+}
+.kf-digit-col {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+.kf-digit-cell {
+  display: block;
+  height: 1.1em;
+  line-height: 1.1em;
+}
+
+/* Dark card background (CSS-only, replaces the reference's video) */
+.kf-aurora {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #08170e;
+}
+.kf-aurora::before,
+.kf-aurora::after {
+  content: "";
+  position: absolute;
+  width: 75%;
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  filter: blur(46px);
+  opacity: 0.55;
+}
+.kf-aurora::before {
+  left: -18%;
+  top: -12%;
+  background: radial-gradient(circle, #c6f35c 0%, transparent 66%);
+  animation: kf-drift-a 14s ease-in-out infinite alternate;
+}
+.kf-aurora::after {
+  right: -24%;
+  bottom: -18%;
+  background: radial-gradient(circle, #0a84ff 0%, transparent 66%);
+  animation: kf-drift-b 17s ease-in-out infinite alternate;
+}
+@keyframes kf-drift-a {
+  to {
+    transform: translate3d(28%, 22%, 0) scale(1.15);
+  }
+}
+@keyframes kf-drift-b {
+  to {
+    transform: translate3d(-30%, -18%, 0) scale(1.1);
+  }
+}
+
+/* Mobile partners marquee */
+.kf-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: kf-marquee 18s linear infinite;
+}
+@keyframes kf-marquee {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kf-aurora::before,
+  .kf-aurora::after,
+  .kf-marquee-track {
+    animation: none;
+  }
+}
+
+/* Hide the scrollbar on the mobile card row */
+.kf-hide-scrollbar {
+  scrollbar-width: none;
+}
+.kf-hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* phones: the pinned slider sets each card's width */
+.kf-m-card > * { width: 100% !important; max-width: none !important; }
+@media (max-width: 767px) {
+  .kf-root .kf-h2 { font-size: clamp(1.5rem, 6.4vw, 1.9rem); }
+}

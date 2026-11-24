@@ -1,0 +1,297 @@
+/* ════════════════════════════════════════════════════════════════════
+   360° AI ORBIT — light sweep (track, beam, scan line, card glow), header, counter + progress arc.
+   Markup + per-frame positions: ./Orbit.jsx (called from RingGallery's scroll loop).
+   ════════════════════════════════════════════════════════════════════ */
+.rg-track,
+.rg-beam,
+.rg-scan {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  pointer-events: none;
+  visibility: hidden;
+  will-change: transform, opacity;
+}
+
+/* the 360° circle the beam travels on */
+.rg-track {
+  border-radius: 50%;
+  border: 1px solid rgba(10, 132, 255, 0.28);
+  box-shadow: 0 0 18px rgba(10, 132, 255, 0.12);
+}
+
+/* the light beam: a conic wedge on the floor of the ring, masked to a band under the cards;
+   its bright head is at 12 o'clock and the glow trails behind it */
+.rg-beam {
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 300deg,
+    rgba(10, 132, 255, 0.1) 318deg,
+    rgba(10, 132, 255, 0.42) 350deg,
+    rgba(215, 236, 255, 0.95) 359deg,
+    transparent 360deg
+  );
+  -webkit-mask-image: radial-gradient(closest-side, transparent 72%, #000 84%, #000 96%, transparent 100%);
+  mask-image: radial-gradient(closest-side, transparent 72%, #000 84%, #000 96%, transparent 100%);
+}
+
+/* the upright scan line standing at the beam's head */
+.rg-scan {
+  width: 2px;
+  margin-left: -1px;
+  background: linear-gradient(0deg, rgba(215, 236, 255, 0.95) 0%, rgba(10, 132, 255, 0.45) 45%, transparent 100%);
+  box-shadow: 0 0 14px 3px rgba(10, 132, 255, 0.35);
+  border-radius: 2px;
+}
+
+/* a card lights up as the beam passes (--lit 0 → 1, written per frame) */
+.rg-card {
+  --lit: 0;
+}
+.rg-card .rg-card-face {
+  box-shadow:
+    0 18px 36px -24px rgba(0, 0, 0, 0.45),
+    0 0 0 calc(var(--lit) * 2px) rgba(150, 205, 255, calc(var(--lit) * 0.95)),
+    0 0 calc(var(--lit) * 38px) rgba(10, 132, 255, calc(var(--lit) * 0.55));
+}
+.rg-card .rg-card-face > img {
+  filter: brightness(calc(1 + var(--lit) * 0.2)) saturate(calc(1 + var(--lit) * 0.15));
+}
+
+/* unroll: the 10 capabilities light up in their 5 pillar colours */
+.rg-converge .rg-card-frame {
+  clip-path: inset(0 0 0 0 round 24px);
+  transition: clip-path 0.9s var(--rg-ease);
+}
+
+/* ---- header (top-left) + counter (top-right): one slim band above the ring ---- */
+.rg-hud {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  visibility: hidden;
+  color: #0a0e11;
+}
+.rg-hud p {
+  margin: 0;
+}
+.rg-hud-left {
+  position: absolute;
+  left: clamp(24px, 3.4vw, 56px);
+  top: clamp(80px, 11vh, 112px);
+  width: min(560px, 46vw);
+}
+.rg-hud-title {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+/* each header line rises out of its own mask (transform written per frame) */
+.rg-hl-mask {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em; /* room for descenders inside the mask */
+}
+.rg-hl-line {
+  display: block;
+  transform: translate3d(0, 108%, 0);
+  will-change: transform;
+}
+.rg-hud-eyebrow {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  font: 600 11px/1.2 "Michroma", "Eurostile", "Arial Black", sans-serif;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+.rg-hud-eyebrow i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0a84ff;
+  box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.15);
+}
+.rg-hud-h {
+  font-size: clamp(1.45rem, 2.3vw, 2.25rem);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+}
+.rg-hud-h em {
+  font-style: normal;
+  color: rgba(10, 14, 17, 0.42);
+}
+.rg-hud-sub {
+  max-width: 34rem;
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(10, 14, 17, 0.6);
+}
+
+.rg-hud-count {
+  margin-top: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px 10px 10px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.rg-hud-num {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding-right: 14px;
+  border-right: 1px solid rgba(10, 14, 17, 0.18);
+}
+/* odometer: a column of numbers in a one-line mask, rolled with a transition */
+.rg-odo {
+  display: block;
+  height: 1em;
+  overflow: hidden;
+  font-size: clamp(2rem, 3vw, 2.8rem);
+  line-height: 1;
+}
+.rg-odo-strip {
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rg-odo-strip b {
+  display: block;
+  height: 1em;
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+}
+.rg-hud-of {
+  font: 500 11px/1 "Michroma", "Eurostile", "Arial Black", sans-serif;
+  letter-spacing: 0.14em;
+  color: rgba(10, 14, 17, 0.5);
+}
+.rg-hud-name {
+  min-width: 11rem;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.rg-hud-deg {
+  margin-top: 6px !important;
+  font: 500 11px/1 "Michroma", "Eurostile", "Arial Black", sans-serif;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(10, 14, 17, 0.5);
+}
+.rg-hud-deg span {
+  color: #0a84ff;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 0° → 360° progress arc beside the counter */
+.rg-arc {
+  width: 34px;
+  height: 34px;
+  flex: none;
+}
+.rg-arc-track {
+  fill: none;
+  stroke: rgba(10, 14, 17, 0.14);
+  stroke-width: 2;
+}
+.rg-arc-fill {
+  fill: none;
+  stroke: #0a84ff;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* short screens: header keeps eyebrow + headline only */
+@media (max-height: 820px) {
+  .rg-hud-sub {
+    display: none !important;
+  }
+}
+
+@media (max-width: 820px) {
+  .rg-hud-left {
+    position: static;
+    width: auto;
+  }
+  .rg-hud-title {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    top: 76px;
+    gap: 8px;
+  }
+  .rg-hud-h {
+    font-size: 1.35rem;
+  }
+  .rg-hud-sub {
+    display: none !important;
+  }
+  .rg-hud-count {
+    position: absolute;
+    margin: 0;
+    right: 18px;
+    bottom: 96px; /* clears the mobile glass tab bar */
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.72);
+  }
+  .rg-odo {
+    font-size: 1.7rem;
+  }
+  .rg-hud-name {
+    min-width: 0;
+    font-size: 13px;
+  }
+  .rg-arc {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rg-odo-strip {
+    transition: none;
+  }
+}
+
+/* phones: smaller header type, compact frosted-glass counter */
+@media (max-width: 767px) {
+  .rg-hud-title { top: 72px; gap: 6px; }
+  .rg-hud-eyebrow { font-size: 8.5px; gap: 8px; letter-spacing: 0.2em; }
+  .rg-hud-eyebrow i { width: 6px; height: 6px; box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.15); }
+  .rg-hud-h { font-size: 1.02rem; line-height: 1.2; }
+  .rg-hud-count {
+    left: 50%;
+    right: auto;
+    bottom: max(28px, env(safe-area-inset-bottom));
+    translate: -50% 0;
+    gap: 10px;
+    padding: 7px 12px 7px 8px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.06));
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    box-shadow: 0 8px 24px -10px rgba(10, 14, 17, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    backdrop-filter: blur(14px) saturate(160%);
+  }
+  .rg-hud-num { gap: 4px; padding-right: 10px; }
+  .rg-odo { font-size: 1.25rem; }
+  .rg-hud-of { font-size: 8.5px; }
+  .rg-hud-name { font-size: 10.5px; white-space: nowrap; }
+  .rg-hud-deg { margin-top: 4px !important; font-size: 8px; }
+  .rg-arc { width: 20px; height: 20px; }
+}
