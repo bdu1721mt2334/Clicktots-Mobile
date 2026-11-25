@@ -44,8 +44,6 @@ const loadShapes = () => import("./worldShapes.generated");
 
 const SCROLL_VH = 620; // scroll length of this section, in screens
 const BG = "#04070d";
-const PAPER = "#E9E6DF"; // = Awards background
-const INK = "#121110";
 const MONO = "Michroma,Eurostile,'Arial Black',sans-serif";
 const DISPLAY = "Michroma,Eurostile,'Arial Black',sans-serif";
 const SIGNAL_COLOR = "#ffa45c";
@@ -96,8 +94,8 @@ const INDIA_SIGNAL = [
   [0.505, 0.565], // Dubai
   [0.57, 0.62], // Delhi
 ];
-const T_GLOBAL = [0.645, 0.735]; // camera pull-back into the world map
-const T_HEADING = [0.665, 0.715]; // "6 hubs" → "9 hubs on 3 continents"
+const T_GLOBAL = [0.635, 0.745]; // camera pull-back into the world map
+const T_HEADING = [0.655, 0.725]; // "6 hubs" → "9 hubs on 3 continents"
 const GLOBAL_SIGNAL = [
   [0.745, 0.8], // Singapore is notified
   [0.81, 0.865], // United Kingdom
@@ -171,7 +169,7 @@ const CSS = `
 .bm-map{position:absolute;right:4vw;top:5vh;height:90vh;aspect-ratio:${VB_W} / ${VB_H}}
 .bm-map svg{display:block;width:100%;height:100%;overflow:visible}
 .bm-region-dots{fill:url(#bm-dots-fine)}
-.bm-region-fill{fill:url(#bm-land-grad)}
+.bm-region-fill{fill:url(#bm-region-grad)}
 .bm-region-coast{fill:none;stroke:rgba(140,200,255,.6);stroke-width:1;vector-effect:non-scaling-stroke;stroke-linejoin:round}
 .bm-region-borders{fill:none;stroke:rgba(140,200,255,.22);stroke-width:.8;vector-effect:non-scaling-stroke}
 .bm-ilabel{font:600 13px ${MONO};letter-spacing:.08em;text-transform:uppercase;paint-order:stroke;fill:#fff;stroke:rgba(4,7,13,.85);stroke-width:3.4px;stroke-linejoin:round}
@@ -211,16 +209,21 @@ const CSS = `
 .bm-pin line{stroke:rgba(170,215,255,.85);stroke-width:1.2}
 .bm-wring{fill:none;stroke:${WORLD_GLOW};stroke-width:1.4;transform-box:fill-box;transform-origin:center;animation:bm-ping 2.6s ease-out infinite}
 .bm-wring.b{animation-delay:1.3s}
-.bm-burst{fill:none;stroke:#bfe0ff;stroke-width:1.6;opacity:0;filter:drop-shadow(0 0 6px rgba(90,170,255,.9))}
-.bm-country{fill:rgba(64,150,255,.28);stroke:#8cc4ff;stroke-width:1.1;stroke-linejoin:round;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 6px rgba(70,160,255,.95)) drop-shadow(0 0 14px rgba(70,160,255,.6));transition:none}
+.bm-burst{fill:none;stroke:#bfe0ff;stroke-width:1.6;opacity:0}
+.bm-country{fill:rgba(72,162,255,.32);stroke:#9ed0ff;stroke-width:1.35;stroke-linejoin:round;vector-effect:non-scaling-stroke;transition:none}
 @media (max-width:899px){.bm-hud{display:none}.bm-pin text{font-size:11px}}
 .bm-narrative{margin:16px 0 0;max-width:min(30vw,420px);font:400 13px/1.6 ${DISPLAY};color:rgba(255,255,255,.62)}
 @media (max-height:780px){.bm-narrative{display:none}}
 @media (max-width:899px){
   .bm-narrative{display:none}
+  .bm-country,.bm-burst{filter:none!important}
   .bm-title{top:clamp(54px,7vh,70px)!important}
   .bm-map{right:0;left:0;margin:0 auto;top:auto;bottom:1vh;height:min(70vh,74vw)}
   .bm-blur{width:100%!important;bottom:auto;height:42vh;background:linear-gradient(180deg,rgba(4,7,13,.95) 0,rgba(4,7,13,.9) 88%,rgba(4,7,13,0) 100%);-webkit-backdrop-filter:none;backdrop-filter:none;-webkit-mask-image:linear-gradient(180deg,#000 0,#000 90%,transparent 100%);mask-image:linear-gradient(180deg,#000 0,#000 90%,transparent 100%)}
+}
+@media (max-width:767px){
+  .bm-ring,.bm-wring{animation:none!important;opacity:.45}
+  .bm-ring.b,.bm-wring.b{display:none}
 }
 .bm-mlist{display:none}
 @media (max-width:899px){
@@ -466,16 +469,24 @@ export default function BranchesMap() {
 
     const arcPaths = arcs.current;
     const totals = arcPaths.map((el) => (el ? el.getTotalLength() : 1));
+    const lastArcT = arcPaths.map(() => -1);
 
-    const drawSignal = (el, head, total, t) => {
+    const drawSignal = (el, head, total, t, idx) => {
       if (!el) return;
-      el.style.strokeDashoffset = String((1 - t).toFixed(4));
-      el.style.opacity = t > 0 ? "1" : "0";
-      if (head) {
-        const pt = el.getPointAtLength(total * t);
-        head.setAttribute("cx", pt.x.toFixed(1));
-        head.setAttribute("cy", pt.y.toFixed(1));
-        head.style.opacity = String(t > 0 && t < 1 ? 1 : 0);
+      if (lastArcT[idx] !== t) {
+        lastArcT[idx] = t;
+        el.style.strokeDashoffset = String((1 - t).toFixed(4));
+        el.style.opacity = t > 0 ? "1" : "0";
+        if (head) {
+          if (t > 0 && t < 1) {
+            const pt = el.getPointAtLength(total * t);
+            head.setAttribute("cx", pt.x.toFixed(1));
+            head.setAttribute("cy", pt.y.toFixed(1));
+            head.style.opacity = "1";
+          } else {
+            head.style.opacity = "0";
+          }
+        }
       }
     };
 
@@ -552,66 +563,95 @@ export default function BranchesMap() {
         });
       }
 
-      /* hub list: each name is typed in as its signal arrives */
-      STEPS.forEach((step, i) => {
-        const arrive = arriveAt(p, step);
-        const row = rows.current[i];
-        const txt = rowText.current[i];
-        if (row) row.style.opacity = String((0.3 + 0.7 * arrive).toFixed(3));
-        if (txt) txt.style.clipPath = `inset(0 ${((1 - arrive) * 100).toFixed(1)}% 0 0)`;
-      });
+      /* hub list: each name is typed in as its signal arrives (desktop only — hidden on mobile/tablet) */
+      if (wide) {
+        STEPS.forEach((step, i) => {
+          const arrive = arriveAt(p, step);
+          const row = rows.current[i];
+          const txt = rowText.current[i];
+          if (row) row.style.opacity = String((0.3 + 0.7 * arrive).toFixed(3));
+          if (txt) txt.style.clipPath = `inset(0 ${((1 - arrive) * 100).toFixed(1)}% 0 0)`;
+        });
+      }
 
       /* ONE camera over one dotted map. Chapter 1 holds the static India + Dubai close-up (magnified s0,
          settling from FLAT_START); chapter 2 pulls back to the whole world (s0 → 1, on a log scale), always
-         locked on Chennai. */
+         locked on Chennai. Keep GPU layers continuously promoted (no willChange/transform:"none" toggling)
+         so India → World pull-back never stalls to re-rasterize the SVGs. */
       const gt = inOut(range(p, T_GLOBAL[0], T_GLOBAL[1]));
       const wm = Math.pow(G.s0, 1 - gt) * ms; // map magnification
       const ccx = lerp(G.cx, G.wcx, gt);
       const ccy = lerp(G.cy, G.wcy, gt);
-      const worldT = `translate3d(${(ccx - wm * G.wcx).toFixed(2)}px,${(ccy - wm * G.wcy).toFixed(2)}px,0) scale(${wm.toFixed(5)})`;
-      // promote to a GPU layer only while the camera moves; once settled the browser re-draws the vectors crisp
-      const moving = (p > T_FLAT[0] && p < T_FLAT_SETTLE[1]) || (gt > 0 && gt < 1);
+      const worldT =
+        gt >= 1
+          ? "translate3d(0px,0px,0) scale(1)"
+          : `translate3d(${(ccx - wm * G.wcx).toFixed(2)}px,${(ccy - wm * G.wcy).toFixed(2)}px,0) scale(${wm.toFixed(5)})`;
+      const faStr = fa.toFixed(3);
+      const faVis = fa <= 0 ? "hidden" : "visible";
       [worldLandLayer.current, worldSigLayer.current].forEach((el) => {
         if (!el) return;
-        el.style.willChange = moving ? "transform,opacity" : "auto";
-        el.style.transform = gt >= 1 ? "none" : worldT;
-        el.style.opacity = String(fa.toFixed(3));
-        el.style.visibility = fa <= 0 ? "hidden" : "visible";
+        el.style.transform = worldT;
+        el.style.opacity = faStr;
+        el.style.visibility = faVis;
       });
-      /* close-up detail (1:50m coast, fine dots) hands over to the whole-world dots as the camera pulls back */
-      if (regionRef.current) regionRef.current.style.opacity = String((1 - range(gt, 0.05, 0.4)).toFixed(3));
-      if (baseLandRef.current) baseLandRef.current.style.opacity = String(range(gt, 0, 0.35).toFixed(3));
+      /* close-up detail SVG & whole-world SVG live in separate GPU-composited SVGs so opacity cross-fades
+         run purely on the compositor without re-rasterizing 270KB of vector paths every frame */
+      if (regionRef.current) {
+        const ro = 1 - range(gt, 0.05, 0.4);
+        regionRef.current.style.opacity = ro <= 0.001 ? "0" : ro.toFixed(3);
+        regionRef.current.style.visibility = ro <= 0.001 ? "hidden" : "visible";
+      }
+      if (baseLandRef.current) {
+        const bo = range(gt, 0, 0.35);
+        baseLandRef.current.style.opacity = bo <= 0.001 ? "0" : bo.toFixed(3);
+        baseLandRef.current.style.visibility = bo <= 0.001 ? "hidden" : "visible";
+      }
 
       /* markers, lines and labels keep a constant on-screen size whatever the zoom: u = 1 / (screen px per unit) */
       const u = 1 / (G.ws * wm);
 
-      /* CHAPTER 1: India markers + orange signal lines (on the map itself, so they ride the camera) */
+      /* CHAPTER 1: India markers + orange signal lines (skip all DOM updates once hidden during world zoom-out) */
+      const io = 1 - range(gt, 0, 0.35);
       if (indiaGroup.current) {
-        const io = 1 - range(gt, 0, 0.35);
-        indiaGroup.current.style.opacity = io.toFixed(3);
-        indiaGroup.current.style.visibility = io <= 0 ? "hidden" : "visible";
+        indiaGroup.current.style.opacity = io <= 0.001 ? "0" : io.toFixed(3);
+        indiaGroup.current.style.visibility = io <= 0.001 ? "hidden" : "visible";
       }
-      INDIA_HUBS.forEach((c, i) => {
-        const m = markers.current[i];
-        if (!m) return;
-        const arrive = arriveAt(p, STEPS[i]);
-        const s = easeOutBack(arrive);
-        const pt = INDIA_PTS[i];
-        m.style.opacity = String(Math.min(1, arrive * 2));
-        m.setAttribute("transform", `translate(${pt.x.toFixed(2)} ${pt.y.toFixed(2)}) scale(${Math.max(0.0001, s * u).toFixed(5)})`);
-      });
-      arcPaths.forEach((el, i) => {
-        const t = inOut(range(p, INDIA_SIGNAL[i][0], INDIA_SIGNAL[i][1]));
-        if (el) el.setAttribute("stroke-width", (ARC_PX * u).toFixed(4));
-        const gl = glows.current[i];
-        if (gl) {
-          gl.setAttribute("stroke-width", (ARC_PX * 3.2 * u).toFixed(4));
-          gl.style.strokeDashoffset = String((1 - t).toFixed(4));
-          gl.style.opacity = t > 0 ? "0.35" : "0";
-        }
-        if (heads.current[i]) heads.current[i].setAttribute("r", (HEAD_PX * u).toFixed(4));
-        drawSignal(el, heads.current[i], totals[i], t);
-      });
+      if (io > 0.001) {
+        INDIA_HUBS.forEach((c, i) => {
+          const m = markers.current[i];
+          if (!m) return;
+          const arrive = arriveAt(p, STEPS[i]);
+          if (arrive <= 0) {
+            if (m.style.opacity !== "0") m.style.opacity = "0";
+            return;
+          }
+          const s = easeOutBack(arrive);
+          const pt = INDIA_PTS[i];
+          m.style.opacity = String(Math.min(1, arrive * 2));
+          m.setAttribute("transform", `translate(${pt.x.toFixed(2)} ${pt.y.toFixed(2)}) scale(${Math.max(0.0001, s * u).toFixed(5)})`);
+        });
+        arcPaths.forEach((el, i) => {
+          const t = inOut(range(p, INDIA_SIGNAL[i][0], INDIA_SIGNAL[i][1]));
+          if (t <= 0) {
+            if (lastArcT[i] !== 0) {
+              if (glows.current[i]) glows.current[i].style.opacity = "0";
+              drawSignal(el, heads.current[i], totals[i], 0, i);
+            }
+            return;
+          }
+          if (el) el.setAttribute("stroke-width", (ARC_PX * u).toFixed(4));
+          const gl = glows.current[i];
+          if (gl) {
+            gl.setAttribute("stroke-width", (ARC_PX * 3.2 * u).toFixed(4));
+            if (lastArcT[i] !== t) {
+              gl.style.strokeDashoffset = String((1 - t).toFixed(4));
+              gl.style.opacity = "0.35";
+            }
+          }
+          if (heads.current[i] && t < 1) heads.current[i].setAttribute("r", (HEAD_PX * u).toFixed(4));
+          drawSignal(el, heads.current[i], totals[i], t, i);
+        });
+      }
 
       STEPS.forEach((step, i) => {
         const m = worldMarkers.current[i];
@@ -619,21 +659,23 @@ export default function BranchesMap() {
         const isGlobal = i >= INDIA_HUBS.length;
         // India's own world pins (India / UAE) take over from the orange close-up markers during the pull-back
         const arrive = isGlobal ? arriveAt(p, step) : range(gt, 0.25, 0.7);
+        if (arrive <= 0) {
+          if (m.style.opacity !== "0") m.style.opacity = "0";
+          return;
+        }
         const s = isGlobal || step.hub.pin ? easeOutBack(arrive) : 0.62; // other India cities: small dots
         const [x, y] = worldXY(step.hub.lon, step.hub.lat);
         m.style.opacity = String(Math.min(1, arrive * 2));
         m.setAttribute("transform", `translate(${x.toFixed(2)} ${y.toFixed(2)}) scale(${Math.max(0.001, s * u).toFixed(4)})`);
       });
-      /* countries glow blue once their hub is online (India and the UAE are already online) */
+      /* countries glow blue once their hub is online (no mid-zoom CSS filter toggles) */
       STEPS.forEach((step, i) => {
         const key = step.hub.country;
         const el = key && countryRefs.current[key];
         if (!el) return;
-        // India / UAE: a soft tint in the close-up (the dots stay visible), full glow once the world is in view
         const on = i >= INDIA_HUBS.length ? arriveAt(p, step) : lerp(0.3, 1, range(gt, 0.2, 0.8));
-        el.style.opacity = (on * 0.95).toFixed(3);
-        const glow = gt > 0.35 ? "" : "none"; // the CSS glow is far too wide while the map is magnified
-        if (el.style.filter !== glow) el.style.filter = glow;
+        const opStr = (on * 0.95).toFixed(3);
+        if (el.style.opacity !== opStr) el.style.opacity = opStr;
       });
       /* notification ripple: one bright ring rings out around each global hub as it is notified */
       STEPS.forEach((step, i) => {
@@ -641,15 +683,19 @@ export default function BranchesMap() {
         if (!ring || !isGlobalStep(step)) return;
         const b = burstAt(p, step);
         const live = b > 0 && b < 1;
-        ring.setAttribute("r", (7 + easeOutCubic(b) * 42).toFixed(2));
-        ring.style.opacity = live ? ((1 - b) * 0.95).toFixed(3) : "0";
+        if (live) {
+          ring.setAttribute("r", (7 + easeOutCubic(b) * 42).toFixed(2));
+          ring.style.opacity = ((1 - b) * 0.95).toFixed(3);
+        } else if (ring.style.opacity !== "0") {
+          ring.style.opacity = "0";
+        }
       });
 
       /* exit: a ripple from the last hub fills the screen with the Awards colour */
       const w = inOut(range(p, T_RIPPLE[0], T_RIPPLE[1]));
 
-      /* X/Y HUD: the readout follows the signal head along every hop, in story order */
-      if (hud.current) {
+      /* X/Y HUD: desktop only (display:none below 900px) */
+      if (wide && hud.current) {
         hud.current.style.opacity = String((ui * (1 - w)).toFixed(3));
         const o = INDIA_HUBS[0];
         let lat = o.lat;
@@ -687,6 +733,12 @@ export default function BranchesMap() {
         if (hudHubs.current && hudHubs.current.textContent !== hubsTxt) hudHubs.current.textContent = hubsTxt;
       }
       if (paper.current) {
+        if (root.current) {
+          const isPaper = w >= 0.5 ? "1" : "";
+          if (root.current.dataset.branchesPaper !== isPaper) {
+            root.current.dataset.branchesPaper = isPaper;
+          }
+        }
         if (w <= 0) {
           paper.current.style.visibility = "hidden";
         } else {
@@ -778,7 +830,7 @@ export default function BranchesMap() {
   const abs = { position: "absolute", inset: 0 };
 
   return (
-    <div ref={root} id="c-branches" data-text-fade="off" aria-label="Our branches" role="region" style={rootStyle}>
+    <div ref={root} id="c-branches" data-nav-surface="dark" data-text-fade="off" aria-label="Our branches" role="region" style={rootStyle}>
       <div ref={stage} style={stageStyle}>
         <style>{CSS}</style>
         <style>{SPACE_CSS}</style>
@@ -787,6 +839,7 @@ export default function BranchesMap() {
         <div style={{ ...abs, background: BG }}>
           <div ref={bgRef} style={{ position: "absolute", inset: "-8%", willChange: "transform" }}>
             <div
+              className="ct-space-anim"
               style={{
                 position: "absolute",
                 inset: 0,
@@ -797,10 +850,10 @@ export default function BranchesMap() {
               }}
             />
           </div>
-          <div style={{ position: "absolute", inset: 0, animation: "ct-pan 50s linear infinite alternate" }}>
+          <div className="ct-space-anim" style={{ position: "absolute", inset: 0, animation: "ct-pan 50s linear infinite alternate" }}>
             <Stars stars={FAR_STARS} svgRef={farRef} style={{ position: "absolute", left: 0, top: "-12%", height: "124%", willChange: "transform", animation: "ct-twinkle 7s ease-in-out infinite" }} />
           </div>
-          <div style={{ position: "absolute", inset: 0, animation: "ct-pan 28s linear infinite alternate" }}>
+          <div className="ct-space-anim" style={{ position: "absolute", inset: 0, animation: "ct-pan 28s linear infinite alternate" }}>
             <Stars stars={NEAR_STARS} svgRef={nearRef} style={{ position: "absolute", left: 0, top: "-30%", height: "160%", willChange: "transform", animation: "ct-twinkle 4.5s ease-in-out infinite" }} />
           </div>
           {STREAKS.map((m, i) => (
@@ -822,24 +875,25 @@ export default function BranchesMap() {
           }}
         />
 
-        {/* the holographic dot-matrix map, used by BOTH chapters (below the blur strip):
-            India close-up detail (1:50m, fine dots) in chapter 1, whole-world dots (1:110m) in chapter 2 */}
+        {/* the holographic dot-matrix map, split into two GPU-cached sibling SVGs so the India → World
+            cross-fade runs purely on the GPU compositor with zero per-frame SVG re-rasterization */}
         <div ref={worldLandLayer} className="bm-layer" aria-hidden="true" style={{ opacity: 0, visibility: "hidden" }}>
           <div ref={(el) => (worldBoxes.current[0] = el)} className="bm-world bm-holo">
-            <svg ref={(el) => (worldSvgs.current[0] = el)} viewBox={viewBoxOf(VIEW)} focusable="false">
+            {/* Whole-world dot-matrix SVG (chapter 2) */}
+            <svg
+              ref={(el) => {
+                worldSvgs.current[0] = el;
+                baseLandRef.current = el;
+              }}
+              viewBox={viewBoxOf(VIEW)}
+              focusable="false"
+              style={{ opacity: 0, visibility: "hidden", willChange: "opacity" }}
+            >
               <defs>
-                {/* the dot matrix: one dot per 3.2 map units, only where there is land */}
                 <pattern id="bm-dots" width="3.2" height="3.2" patternUnits="userSpaceOnUse">
                   <circle cx="1.6" cy="1.6" r="0.78" fill="rgba(150,205,255,.78)" />
                 </pattern>
-                {/* the close-up's finer dot matrix: looks the same on screen once the camera has zoomed in */}
-                <pattern id="bm-dots-fine" width="0.62" height="0.62" patternUnits="userSpaceOnUse">
-                  <circle cx="0.31" cy="0.31" r="0.15" fill="rgba(150,205,255,.8)" />
-                </pattern>
-<clipPath id="bm-region-clip">
-                  <rect x={REGION_CLIP.x} y={REGION_CLIP.y} width={REGION_CLIP.w} height={REGION_CLIP.h} />
-                </clipPath>
-                                <linearGradient id="bm-land-grad" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="bm-land-grad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0" stopColor="rgba(60,130,230,.20)" />
                   <stop offset="1" stopColor="rgba(30,80,170,.10)" />
                 </linearGradient>
@@ -847,19 +901,43 @@ export default function BranchesMap() {
               {geo && (
                 <>
                   <path d={geo.WORLD_GRATICULE} className="bm-grat" />
-                  <g ref={baseLandRef} style={{ opacity: 0 }}>
-                    <path d={geo.WORLD_LAND} className="bm-land-fill" />
-                    <path d={geo.WORLD_LAND} className="bm-land-dots" />
-                    <path d={geo.WORLD_BORDERS} className="bm-borders" />
-                    <path d={geo.WORLD_LAND} className="bm-coast" />
-                  </g>
-                  <g ref={regionRef}>
-                    <path d={geo.REGION_LAND} className="bm-region-fill" />
-                    <path d={geo.REGION_LAND} className="bm-region-dots" />
-                    <g clipPath="url(#bm-region-clip)">
-                      <path d={geo.WORLD_BORDERS} className="bm-region-borders" />
-                      <path d={geo.REGION_LAND} className="bm-region-coast" />
-                    </g>
+                  <path d={geo.WORLD_LAND} className="bm-land-fill" />
+                  <path d={geo.WORLD_LAND} className="bm-land-dots" />
+                  <path d={geo.WORLD_BORDERS} className="bm-borders" />
+                  <path d={geo.WORLD_LAND} className="bm-coast" />
+                </>
+              )}
+            </svg>
+            {/* India + Dubai close-up detail SVG (chapter 1) */}
+            <svg
+              ref={(el) => {
+                worldSvgs.current[2] = el;
+                regionRef.current = el;
+              }}
+              viewBox={viewBoxOf(VIEW)}
+              focusable="false"
+              style={{ willChange: "opacity" }}
+            >
+              <defs>
+                <pattern id="bm-dots-fine" width="0.62" height="0.62" patternUnits="userSpaceOnUse">
+                  <circle cx="0.31" cy="0.31" r="0.15" fill="rgba(150,205,255,.8)" />
+                </pattern>
+                <linearGradient id="bm-region-grad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stopColor="rgba(60,130,230,.20)" />
+                  <stop offset="1" stopColor="rgba(30,80,170,.10)" />
+                </linearGradient>
+                <clipPath id="bm-region-clip">
+                  <rect x={REGION_CLIP.x} y={REGION_CLIP.y} width={REGION_CLIP.w} height={REGION_CLIP.h} />
+                </clipPath>
+              </defs>
+              {geo && (
+                <>
+                  <path d={geo.WORLD_GRATICULE} className="bm-grat" />
+                  <path d={geo.REGION_LAND} className="bm-region-fill" />
+                  <path d={geo.REGION_LAND} className="bm-region-dots" />
+                  <g clipPath="url(#bm-region-clip)">
+                    <path d={geo.WORLD_BORDERS} className="bm-region-borders" />
+                    <path d={geo.REGION_LAND} className="bm-region-coast" />
                   </g>
                 </>
               )}
@@ -985,13 +1063,13 @@ export default function BranchesMap() {
           width={104}
           height={104}
           draggable={false}
+          className="ct-rocket-img"
           style={{
             position: "absolute",
             left: 0,
             top: 0,
             transformOrigin: "50% 50%",
             willChange: "transform, opacity",
-            filter: "drop-shadow(0 8px 14px rgba(0,0,0,.35)) drop-shadow(0 0 16px rgba(255,138,76,.45))",
             userSelect: "none",
           }}
         />
@@ -1072,7 +1150,7 @@ export default function BranchesMap() {
             position: "absolute",
             inset: 0,
             visibility: "hidden",
-            background: PAPER,
+            background: "var(--bm-exit-paper, #E9E6DF)",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -1082,10 +1160,10 @@ export default function BranchesMap() {
           }}
         >
           <div ref={paperText} style={{ opacity: 0 }}>
-            <p style={{ margin: "0 0 18px", font: `500 12px/16px ${MONO}`, letterSpacing: ".1em", textTransform: "uppercase", color: "#6E6A62" }}>
+            <p style={{ margin: "0 0 18px", font: `500 12px/16px ${MONO}`, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--bm-exit-mut, #6E6A62)" }}>
               Next · Awards &amp; Milestones
             </p>
-            <p style={{ margin: 0, font: `400 clamp(2rem,6.5vw,5.5rem)/1.1 ${DISPLAY}`, color: INK }}>Onward.</p>
+            <p style={{ margin: 0, font: `400 clamp(2rem,6.5vw,5.5rem)/1.1 ${DISPLAY}`, color: "var(--bm-exit-ink, #121110)" }}>Onward.</p>
           </div>
         </div>
       </div>

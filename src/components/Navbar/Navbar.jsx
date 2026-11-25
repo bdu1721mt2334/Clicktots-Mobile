@@ -123,7 +123,7 @@ const itemVariants = {
   exit: { opacity: 0, transition: { duration: 0.1 } },
 };
 
-function ServicesMenu({ open, onClose }) {
+function ServicesMenu({ open, isLight = false, onClose }) {
   const [hovered, setHovered] = useState(null);
   const lightRef = useRef(null);
 
@@ -163,20 +163,31 @@ function ServicesMenu({ open, onClose }) {
             >
               <LiquidGlass
                 variant="clear"
-                tone="dark"
+                tone={isLight ? "light" : "dark"}
                 radius={26}
                 bezel={28}
                 refraction={1.35}
                 dispersion={0.12}
-                blur={7}
-                style={{
-                  "--fd-lg-fill": "rgba(10, 14, 22, 0.2)",
-                  "--fd-lg-sat": "1.8",
-                  "--fd-lg-bright": "1.08",
-                  "--fd-lg-spec-o": "1",
-                  "--fd-lg-shadow":
-                    "0 30px 70px -18px rgba(0, 0, 0, 0.7), 0 8px 24px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 -1px 0 rgba(255, 255, 255, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.06)",
-                }}
+                blur={isLight ? 14 : 10}
+                style={
+                  isLight
+                    ? {
+                        "--fd-lg-fill": "rgba(246, 243, 236, 0.95)",
+                        "--fd-lg-sat": "1.35",
+                        "--fd-lg-bright": "1.02",
+                        "--fd-lg-spec-o": "0.55",
+                        "--fd-lg-shadow":
+                          "0 26px 60px -16px rgba(18, 17, 16, 0.3), 0 8px 20px -10px rgba(18, 17, 16, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 0 rgba(18, 17, 16, 0.06), inset 0 0 0 1px rgba(18, 17, 16, 0.14)",
+                      }
+                    : {
+                        "--fd-lg-fill": "rgba(10, 14, 22, 0.86)",
+                        "--fd-lg-sat": "1.6",
+                        "--fd-lg-bright": "1.06",
+                        "--fd-lg-spec-o": "0.95",
+                        "--fd-lg-shadow":
+                          "0 30px 70px -18px rgba(0, 0, 0, 0.78), 0 8px 24px -12px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 rgba(255, 255, 255, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.12)",
+                      }
+                }
               >
                 <div
                   ref={lightRef}
@@ -187,7 +198,11 @@ function ServicesMenu({ open, onClose }) {
                   {/* glass sheen: light catching the top edge, fading down */}
                   <span
                     aria-hidden="true"
-                    className="pointer-events-none absolute inset-0 rounded-[inherit] bg-[linear-gradient(180deg,rgba(255,255,255,0.13)_0%,rgba(255,255,255,0.035)_26%,transparent_55%)]"
+                    className={`pointer-events-none absolute inset-0 rounded-[inherit] ${
+                      isLight
+                        ? "bg-[linear-gradient(180deg,rgba(255,255,255,0.65)_0%,rgba(255,255,255,0.12)_28%,transparent_60%)]"
+                        : "bg-[linear-gradient(180deg,rgba(255,255,255,0.13)_0%,rgba(255,255,255,0.035)_26%,transparent_55%)]"
+                    }`}
                   />
                   {/* diagonal reflection streak */}
                   <span
@@ -200,8 +215,9 @@ function ServicesMenu({ open, onClose }) {
                     className="pointer-events-none absolute inset-0 rounded-[inherit] transition-opacity duration-500"
                     style={{
                       opacity: "var(--mo, 0)",
-                      background:
-                        "radial-gradient(380px circle at var(--mx, 50%) var(--my, 0%), rgba(140, 198, 255, 0.12), rgba(255, 255, 255, 0.04) 35%, transparent 65%)",
+                      background: isLight
+                        ? "radial-gradient(380px circle at var(--mx, 50%) var(--my, 0%), rgba(10, 132, 255, 0.1), rgba(255, 255, 255, 0.25) 35%, transparent 65%)"
+                        : "radial-gradient(380px circle at var(--mx, 50%) var(--my, 0%), rgba(140, 198, 255, 0.12), rgba(255, 255, 255, 0.04) 35%, transparent 65%)",
                     }}
                   />
 
@@ -233,7 +249,11 @@ function ServicesMenu({ open, onClose }) {
                               layoutId="services-hover-pill"
                               transition={PILL_SPRING}
                               aria-hidden="true"
-                              className="absolute inset-0 rounded-2xl bg-[linear-gradient(180deg,rgba(255,255,255,0.11),rgba(255,255,255,0.045))] shadow-[inset_0_1px_0_rgba(255,255,255,0.2),inset_0_0_0_1px_rgba(255,255,255,0.07),0_6px_18px_-8px_rgba(0,0,0,0.6)]"
+                              className={
+                                isLight
+                                  ? "absolute inset-0 rounded-2xl bg-[#121110]/[0.07] shadow-[inset_0_0_0_1px_rgba(18,17,16,0.12),0_4px_14px_-8px_rgba(18,17,16,0.18)]"
+                                  : "absolute inset-0 rounded-2xl bg-[linear-gradient(180deg,rgba(255,255,255,0.13),rgba(255,255,255,0.05))] shadow-[inset_0_1px_0_rgba(255,255,255,0.22),inset_0_0_0_1px_rgba(255,255,255,0.09),0_6px_18px_-8px_rgba(0,0,0,0.6)]"
+                              }
                             />
                           )}
 
@@ -242,14 +262,18 @@ function ServicesMenu({ open, onClose }) {
                             {/* soft blurred glow */}
                             <span
                               aria-hidden="true"
-                              className="pointer-events-none absolute inset-1 rounded-full bg-[radial-gradient(circle,rgba(10,132,255,0.75)_0%,rgba(10,132,255,0.25)_45%,transparent_70%)] opacity-0 blur-md scale-50 transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[hot]:scale-110 group-data-[hot]:opacity-100"
+                              className="pointer-events-none absolute inset-1 rounded-full bg-[radial-gradient(circle,rgba(10,132,255,0.65)_0%,rgba(10,132,255,0.2)_45%,transparent_70%)] opacity-0 blur-md scale-50 transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[hot]:scale-110 group-data-[hot]:opacity-100"
                             />
                             {/* glitter: tiny sparkles that twinkle only while hovered */}
                             {SPARKLES.map((sp, i) => (
                               <motion.span
                                 key={i}
                                 aria-hidden="true"
-                                className="pointer-events-none absolute h-[3px] w-[3px] rounded-full bg-[#cfe6ff] shadow-[0_0_6px_2px_rgba(94,176,255,0.9)]"
+                                className={`pointer-events-none absolute h-[3px] w-[3px] rounded-full ${
+                                  isLight
+                                    ? "bg-[#0066cc] shadow-[0_0_6px_1px_rgba(10,132,255,0.75)]"
+                                    : "bg-[#cfe6ff] shadow-[0_0_6px_2px_rgba(94,176,255,0.9)]"
+                                }`}
                                 style={{ top: sp.top, left: sp.left }}
                                 initial={false}
                                 animate={
@@ -265,17 +289,35 @@ function ServicesMenu({ open, onClose }) {
                               />
                             ))}
                             <Icon
-                              className="relative h-6 w-6 text-white/80 transition-[transform,color,filter] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[hot]:scale-[1.18] group-data-[hot]:-rotate-6 group-data-[hot]:text-[#8cc6ff] group-data-[hot]:drop-shadow-[0_0_6px_rgba(94,176,255,1)] group-active:scale-105"
-                              strokeWidth={1.75}
+                              className={`relative h-6 w-6 transition-[transform,color,filter] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[hot]:scale-[1.18] group-data-[hot]:-rotate-6 group-active:scale-105 ${
+                                isLight
+                                  ? "text-[#121110] group-data-[hot]:text-[#0062cc]"
+                                  : "text-white/90 group-data-[hot]:text-[#8cc6ff] group-data-[hot]:drop-shadow-[0_0_6px_rgba(94,176,255,1)]"
+                              }`}
+                              strokeWidth={isLight ? 2 : 1.75}
                             />
                           </span>
 
                           {/* Seed-style 2-line label */}
                           <span className="relative min-w-0 flex-1">
-                            <span className="block text-[9px] uppercase tracking-[0.12em] text-white/50 transition-colors duration-300 group-data-[hot]:text-[#8cc6ff]/85">
+                            <span
+                              className={`block text-[9px] font-bold uppercase tracking-[0.12em] transition-colors duration-300 ${
+                                isLight
+                                  ? "text-[#4c4841] group-data-[hot]:text-[#0062cc]"
+                                  : "text-white/60 group-data-[hot]:text-[#8cc6ff]"
+                              }`}
+                              style={{ fontSynthesisWeight: "auto" }}
+                            >
                               {card.category}
                             </span>
-                            <span className="mt-0.5 block truncate text-[12px] font-medium text-white/90 transition-[color,transform] duration-300 group-data-[hot]:translate-x-0.5 group-data-[hot]:text-white">
+                            <span
+                              className={`mt-0.5 block truncate text-[12px] font-bold transition-[color,transform] duration-300 group-data-[hot]:translate-x-0.5 ${
+                                isLight
+                                  ? "text-[#121110] group-data-[hot]:text-[#000000]"
+                                  : "text-white group-data-[hot]:text-white"
+                              }`}
+                              style={{ fontSynthesisWeight: "auto" }}
+                            >
                               {card.title}
                             </span>
                           </span>
@@ -410,15 +452,96 @@ function ExpertModal({ open, submitted, onSubmitted, onClose }) {
   );
 }
 
-export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, onLogoClick }) {
+export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, onLogoClick, theme = "light" }) {
   const [isExpertModalOpen, setIsExpertModalOpen] = useState(false);
   const [expertFormSubmitted, setExpertFormSubmitted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [servicesMenuOpen, setServicesMenuOpen] = useState(false);
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
+  // True only when Day Mode is active AND the header is scrolled over a light (#E9E6DF) section
+  const [onLightSurface, setOnLightSurface] = useState(false);
   const closeMenuTimer = useRef(null);
   const pathname = usePathname();
   const [navHidden, setNavHidden] = useHideOnScroll(mobileMenuOpen);
+
+  useEffect(() => {
+    if (theme === "dark") {
+      setOnLightSurface(false);
+      return undefined;
+    }
+    const isInnerPage = pathname.replace(/\/+$/, "") !== "";
+    if (isInnerPage) {
+      const syncInner = () => {
+        const darkOverride = document.documentElement.dataset.navDarkOverride === "1";
+        setOnLightSurface(theme === "light" && !darkOverride);
+      };
+      syncInner();
+      window.addEventListener("clicktots:navsurface", syncInner);
+      return () => window.removeEventListener("clicktots:navsurface", syncInner);
+    }
+    let lastSig = "";
+    let lastLight = null;
+    const probeY = 40;
+
+    const checkSurface = (force = false) => {
+      const y = Math.round(getScrollY() || window.scrollY || 0);
+      const shutterEl = document.querySelector("[data-shutter-light]");
+      const shutterLight = shutterEl?.getAttribute("data-shutter-light") === "1";
+      const branchesEl = document.getElementById("c-branches");
+      const branchesPaper = branchesEl?.dataset?.branchesPaper === "1";
+      const sig = `${y}|${shutterLight ? 1 : 0}|${branchesPaper ? 1 : 0}`;
+      if (!force && sig === lastSig) return;
+      lastSig = sig;
+
+      let darkHit = false;
+      const darkSections = document.querySelectorAll('[data-nav-surface="dark"]');
+      for (let i = 0; i < darkSections.length; i++) {
+        const el = darkSections[i];
+        // AboutReveal is covered by light ShutterTransition bars at the end of its track
+        if (shutterLight && el.dataset.navSection === "about") continue;
+        // BranchesMap is covered by light #E9E6DF exit ripple at the end of its track
+        if (branchesPaper && el.id === "c-branches") continue;
+        const r = el.getBoundingClientRect();
+        if (r.top <= probeY && r.bottom >= probeY) {
+          darkHit = true;
+          break;
+        }
+      }
+      // During the RocketJourney flight (after Testimonials panel leaves the top), space backdrop is dark
+      if (!darkHit) {
+        const testSec = document.getElementById("c-testimonials");
+        if (testSec) {
+          const tr = testSec.getBoundingClientRect();
+          if (tr.top <= probeY && tr.bottom >= probeY) {
+            const panel = testSec.querySelector(".soh-panel");
+            if (panel) {
+              const pr = panel.getBoundingClientRect();
+              if (pr.bottom < probeY) darkHit = true;
+            }
+          }
+        }
+      }
+      const nextLight = !darkHit;
+      if (nextLight !== lastLight) {
+        lastLight = nextLight;
+        setOnLightSurface(nextLight);
+      }
+    };
+
+    checkSurface(true);
+    const t = setTimeout(() => checkSurface(true), 250);
+    const off = onFrame(() => checkSurface(false));
+    const onScroll = () => checkSurface(false);
+    const onResize = () => checkSurface(true);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize, { passive: true });
+    return () => {
+      clearTimeout(t);
+      off();
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [theme, pathname]);
 
   const openServicesMenu = () => {
     clearTimeout(closeMenuTimer.current);
@@ -533,7 +656,7 @@ export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, 
     <>
       <header
         ref={headerRef}
-        className="ct-nav fixed top-0 inset-x-0 z-50 pointer-events-none px-4 sm:px-8 pt-4 sm:pt-6"
+        className="ct-nav fixed top-0 inset-x-0 z-[9150] pointer-events-none px-4 sm:px-8 pt-4 sm:pt-6"
         style={{
           // "none" (not translateY(0)) when shown, so the fixed mobile drawer inside is not trapped by a transform
           transform: navHidden ? "translate3d(0,-140%,0)" : "none",
@@ -551,12 +674,16 @@ export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, 
             >
               <img
                 id="nav-logo-img"
-                src="/assets/clicktots-logo.webp"
+                src={onLightSurface ? "/assets/clicktots-logo.webp" : "/assets/clicktots-logo-dark.webp"}
                 alt="Clicktots Technologies"
                 width={120}
                 height={40}
                 decoding="sync"
-                className="h-8 sm:h-10 w-auto object-contain lg:drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)]"
+                className={`h-8 sm:h-10 w-auto object-contain ${
+                  onLightSurface
+                    ? "lg:drop-shadow-[0_2px_10px_rgba(18,17,16,0.12)]"
+                    : "lg:drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)]"
+                }`}
               />
             </a>
           </motion.div>
@@ -582,12 +709,16 @@ export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, 
                   if (id === "services") openServicesMenu();
                   else setServicesMenuOpen(false);
                 }}
-                tone="dark"
+                tone={onLightSurface ? "light" : "dark"}
                 accent="#0A84FF"
               />
             </motion.div>
 
-            <ServicesMenu open={servicesMenuOpen} onClose={() => setServicesMenuOpen(false)} />
+            <ServicesMenu
+              open={servicesMenuOpen}
+              isLight={onLightSurface}
+              onClose={() => setServicesMenuOpen(false)}
+            />
           </div>
 
           {/* Right: Liquid Glass Blue Button (Desktop) */}
@@ -634,7 +765,11 @@ export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, 
             aria-label="Open navigation menu"
             aria-expanded={mobileMenuOpen}
             onClick={() => setMobileMenuOpen(true)}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-[#0c111b]/85 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_6px_18px_-6px_rgba(0,0,0,0.6)] transition-colors hover:bg-[#162032]/90 cursor-pointer"
+            className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors cursor-pointer ${
+              onLightSurface
+                ? "border-[#121110]/20 bg-[#f6f3ec]/92 text-[#121110] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_18px_-6px_rgba(18,17,16,0.28)] hover:bg-white"
+                : "border-white/25 bg-[#0c111b]/85 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_6px_18px_-6px_rgba(0,0,0,0.6)] hover:bg-[#162032]/90"
+            }`}
           >
             <Menu className="h-5 w-5" />
           </button>
@@ -667,7 +802,7 @@ export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, 
                 }}
               >
                 <div className="flex items-center justify-between gap-2 pb-4 border-b border-white/10">
-                  <img src="/assets/clicktots-logo.webp" alt="Clicktots" width="120" height="28" className="h-6 sm:h-7 w-auto min-w-0 object-contain" />
+                  <img src="/assets/clicktots-logo-dark.webp" alt="Clicktots" width="120" height="28" className="h-6 sm:h-7 w-auto min-w-0 object-contain" />
                   <button
                     type="button"
                     aria-label="Close navigation menu"

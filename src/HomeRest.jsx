@@ -16,22 +16,23 @@ import FAQChatAccordion from "@/components/FAQ/FAQChatAccordion";
 import ContactSpotlight from "@/components/ContactSpotlight/ContactSpotlight";
 import Footer from "@/components/Footer/Footer";
 
-export default function HomeRest({ reduced }) {
+export default function HomeRest({ reduced, theme = "light" }) {
   const keyFactsRef = useRef(null);
+  const shutterColor = theme === "dark" ? "#141923" : "#DDD8CE";
 
   return (
     <>
-      <ShutterTransition color="#D2D2D2" />
-      <KeyFacts sectionRef={keyFactsRef} />
-      <Projects keyFactsRef={keyFactsRef} />
+      <ShutterTransition color={shutterColor} />
+      <KeyFacts sectionRef={keyFactsRef} theme={theme} />
+      <Projects keyFactsRef={keyFactsRef} theme={theme} />
       <RingGallery />
       <RocketJourney>
         <Testimonials base={<ClientShowcase />} flightVh={FLIGHT_VH} />
       </RocketJourney>
       <BranchesMap />
-      <ScrollCover base={<Awards />}>
+      <ScrollCover base={<Awards />} panelColor={theme === "dark" ? "#0b0e14" : "#E9E6DF"}>
         <WorkInMotion />
-        {!reduced && <SectionShutter color="#D2D2D2" />}
+        {!reduced && <SectionShutter color={shutterColor} />}
       </ScrollCover>
       <FAQChatAccordion />
       <ContactSpotlight />

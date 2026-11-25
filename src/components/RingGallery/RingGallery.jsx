@@ -28,8 +28,8 @@ const PHASE = {
   textAt: 0.72,
 };
 const SERVICES_SCROLL_AT = 0.9;
-const TEXT_BG = "#ffffff";
-const TEXT_INK = "#0a0e11";
+const TEXT_BG = "#E9E6DF";
+const TEXT_INK = "#121110";
 
 const SERVICES = {
   Websites: { color: "#E5A93C", n: "01" },
@@ -340,12 +340,19 @@ export default function RingGallery() {
       const cover = clamp01((q - PHASE.coverStart) / (PHASE.coverEnd - PHASE.coverStart));
       const entered = expansion > 0.9;
 
-      // Rounded slide-over over Projects
+      // Rounded slide-over over Projects (mirrors ScrollOverHero's 0.95 -> 1 rising sheet)
       const rad = reduced ? 0 : Math.round(40 * (1 - pre));
       if (rad !== s.lastRad) {
         s.lastRad = rad;
         stage.style.borderRadius = rad ? `${rad}px ${rad}px 0 0` : "0px";
-        stage.style.boxShadow = rad > 0 ? `0 -30px 80px rgba(0,0,0,${(0.55 * (1 - pre)).toFixed(3)})` : "none";
+        stage.style.boxShadow = rad > 0 ? `0 -30px 90px -15px rgba(0,0,0,${(0.65 * (1 - pre)).toFixed(3)})` : "none";
+      }
+      const panelScale = reduced || pre >= 0.999 ? 1 : 0.95 + 0.05 * pre;
+      const scaleStr = panelScale >= 0.9995 ? "none" : `scale(${panelScale.toFixed(4)})`;
+      if (s.lastPanelScale !== scaleStr) {
+        s.lastPanelScale = scaleStr;
+        stage.style.transform = scaleStr;
+        stage.style.transformOrigin = "50% 0%";
       }
 
       stage.classList.toggle("rg-revealed", expansion > 0.55 || reduced);
@@ -543,7 +550,7 @@ export default function RingGallery() {
     <section
       id="ring-gallery"
       ref={sectionRef}
-      className="rg-scope relative z-30 w-full"
+      className="rg-scope relative z-[35] w-full"
       style={{ height: `${100 + PIN_VH}vh`, marginTop: "-100vh" }}
       aria-label="Clicktots services and related work"
     >
@@ -579,7 +586,6 @@ export default function RingGallery() {
                       onClick={(ev) => onCardClick(ev, slot)}
                     >
                       <div ref={(el) => (tiltRefs.current[slot] = el)} className="rg-card-tilt">
-                        <div className="rg-card-frame" />
                         <div className="rg-card-face">
                           <img src={card.image} alt="" draggable={false} loading="lazy" decoding="async" />
                           {card.video && <video muted loop playsInline preload="none" poster={card.image} />}
@@ -666,7 +672,6 @@ export default function RingGallery() {
                         </span>
                       ))}
                     </span>
-                    <span className="rg-underline" />
                     <sup>{svc.n}</sup>
                   </a>{" "}
                 </span>

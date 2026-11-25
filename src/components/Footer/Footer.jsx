@@ -183,7 +183,7 @@ export default function Footer({ standalone = false, onHome, onNavigate }) {
   }, [standalone]);
 
   return (
-    <div ref={wrapRef} className={`ft-wrap${standalone ? " ft-standalone" : ""}`} data-text-fade="off">
+    <div ref={wrapRef} data-nav-surface="dark" className={`ft-wrap${standalone ? " ft-standalone" : ""}`} data-text-fade="off">
       <footer ref={rootRef} className="ft" aria-label="Footer">
         {/* ── background: light → Milky Way over the moon ── */}
         <div className="ft-bg" aria-hidden="true">

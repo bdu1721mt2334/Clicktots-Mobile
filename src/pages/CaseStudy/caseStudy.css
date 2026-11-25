@@ -159,7 +159,7 @@
 /* ── hero: the photo in a rounded frame (same width as a case-study page) ── */
 .cs-iron .hero-section {
   position: relative;
-  padding: 96px 0 30px;
+  padding: 136px 0 30px;
 }
 /* the overlay's Back pill does this job */
 .csd-top .csd-btn { display: none; }
@@ -372,7 +372,7 @@
   position: relative;
   max-width: 1240px;
   margin: 0 auto;
-  padding: 26px 2rem 120px;
+  padding: 132px 2rem 120px;
   color: rgba(255, 255, 255, 0.8);
 }
 .csd-top {
@@ -381,7 +381,6 @@
   gap: 18px;
   height: 48px;
   margin-bottom: 26px;
-  padding-right: 230px; /* room for the Back pill */
 }
 .csd-btn {
   display: inline-flex;

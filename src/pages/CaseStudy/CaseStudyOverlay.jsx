@@ -12,6 +12,7 @@ import { useShutterStage } from "@/hooks/useShutterStage";
 import Footer from "@/components/Footer/Footer";
 import { navigate } from "@/lib/router";
 import { attachTextFade } from "@/hooks/useTextFade";
+import useSiteTheme from "@/hooks/useSiteTheme";
 import CaseStudyPage from "./CaseStudyPage";
 import CaseStudyDetail from "./CaseStudyDetail";
 import { findCaseStudy } from "./caseStudyData";
@@ -30,6 +31,8 @@ function CaseStudyContent({ slug, onClose }) {
   const prevSlug = useRef(slug);
   const [leaving, setLeaving] = useState(false);
   const item = slug ? findCaseStudy(slug) : null;
+  const [theme] = useSiteTheme();
+  const isDark = theme === "dark";
 
   // site text fade inside the overlay (the overlay lives outside #root, where the global one runs)
   useEffect(() => attachTextFade(scrollRef.current, { skipVisible: false }), []);
@@ -63,7 +66,11 @@ function CaseStudyContent({ slug, onClose }) {
   };
 
   return (
-    <div className="absolute inset-0 bg-[#0b0f17] text-white">
+    <div
+      className={`absolute inset-0 transition-colors duration-300 ${
+        isDark ? "bg-[#0b0f17] text-white" : "bg-[#E9E6DF] text-[#121110]"
+      }`}
+    >
       <div ref={scrollRef} data-lenis-prevent className="absolute inset-0 overflow-x-hidden overflow-y-auto overscroll-contain">
         <div ref={contentRef}>
           {item ? (
@@ -77,6 +84,7 @@ function CaseStudyContent({ slug, onClose }) {
       </div>
       {/* Back: a case → the grid (the picture flies home), the grid → the home page */}
       <BackButton
+        tone={isDark ? "dark" : "light"}
         label={item ? "All case studies" : "Back to home"}
         onClick={() => (item ? window.dispatchEvent(new Event("case-back")) : onClose())}
       />

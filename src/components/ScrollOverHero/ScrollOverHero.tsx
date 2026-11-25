@@ -138,7 +138,7 @@ export function ScrollOverHero({
       <div
         ref={baseWrapRef}
         className={cn(
-          "relative z-0 min-h-[560px] bg-black",
+          "soh-base-wrap relative z-0 min-h-[560px] bg-black",
           !reduced && "sticky top-0 h-screen-s",
         )}
       >
@@ -179,7 +179,7 @@ export function ScrollOverHero({
           aria-label="Testimonials"
           style={reduced ? undefined : { scale: panelScale, y: panelY, transformOrigin: "50% 0%" }}
           className={cn(
-            "relative min-h-[100svh] w-full rounded-t-[1.75rem] px-4 pb-24 pt-16 shadow-[0_-30px_90px_-20px_rgba(0,0,0,0.65)] sm:px-8 md:rounded-t-[2.5rem] md:pb-32 md:pt-24", // px = the navbar's, so the content lines up with it
+            "soh-panel relative min-h-[100svh] w-full rounded-t-[1.75rem] px-4 pb-24 pt-16 shadow-[0_-30px_90px_-20px_rgba(0,0,0,0.65)] sm:px-8 md:rounded-t-[2.5rem] md:pb-32 md:pt-24", // px = the navbar's, so the content lines up with it
             panelBg,
           )}
         >

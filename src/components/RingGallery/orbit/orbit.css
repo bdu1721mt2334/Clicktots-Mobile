@@ -3,12 +3,6 @@
    (Orbit track / light sweep / per-frame card glow removed for 120fps smoothness.)
    ════════════════════════════════════════════════════════════════════ */
 
-/* unroll: the 10 capabilities light up in their 5 pillar colours */
-.rg-converge .rg-card-frame {
-  clip-path: inset(0 0 0 0 round 24px);
-  transition: clip-path 0.9s var(--rg-ease);
-}
-
 /* ---- header (top-left) + counter (top-right): one slim band above the ring ---- */
 .rg-hud {
   position: absolute;

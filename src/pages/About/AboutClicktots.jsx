@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useIsPresent } from "motion/react";
 import { ArrowUpRight } from "lucide-react";
 import BackButton from "@/components/BackButton/BackButton";
 import { setScrollLocked } from "@/lib/scroll";
+import useSiteTheme from "@/hooks/useSiteTheme";
 import RobotBackdrop from "@/pages/About/robot/RobotBackdrop";
 import AboutContent from "@/pages/About/AboutContent";
 
@@ -13,7 +14,8 @@ const OPEN_MS = 550;
 const CONTENT_MOUNT_MS = 560;
 const ROBOT_MOUNT_MS = 120; // the robot is pre-built: attach it while the opening wipe is still running
 const BG_START = "#0a84ff"; // = the "Inside our AI engine" button the page grows out of
-const BG_END = "#f2f2f0";
+const BG_END_LIGHT = "#E9E6DF";
+const BG_END_DARK = "#090c12";
 
 function insetFromRect(r) {
   const vw = window.innerWidth;
@@ -51,6 +53,9 @@ function DeferredContent({ scrollRef, onExploreWork, onClose }) {
 export default function AboutClicktots({ open, originRect, onClose, onExploreWork }) {
   const scrollRef = useRef(null);
   const [settled, setSettled] = useState(false);
+  const [theme] = useSiteTheme();
+  const isDark = theme === "dark";
+  const bgEnd = isDark ? BG_END_DARK : BG_END_LIGHT;
   useEffect(() => {
     if (!open) setSettled(false);
   }, [open]);
@@ -88,7 +93,7 @@ export default function AboutClicktots({ open, originRect, onClose, onExploreWor
           role="dialog"
           aria-modal="true"
           aria-label="About Clicktots"
-          className="fixed inset-0 text-[#262626]"
+          className={`fixed inset-0 transition-colors duration-300 ${isDark ? "text-[#f5f7fa]" : "text-[#121110]"}`}
           style={{
             zIndex: 9000,
             willChange: settled ? "auto" : "clip-path",
@@ -97,7 +102,7 @@ export default function AboutClicktots({ open, originRect, onClose, onExploreWor
           initial={{ clipPath: from, backgroundColor: BG_START }}
           animate={{
             clipPath: to,
-            backgroundColor: BG_END,
+            backgroundColor: bgEnd,
             transition: { duration: 0.55, ease: EASE },
           }}
           onAnimationComplete={(def) => {
@@ -110,8 +115,12 @@ export default function AboutClicktots({ open, originRect, onClose, onExploreWor
           }}
         >
           <DeferredBackdrop scrollRef={scrollRef} />
-          {/* light veil: keeps the text crisp while the robot stays clearly visible */}
-          <div className="pointer-events-none absolute inset-0 bg-[#f2f2f0]/25" />
+          {/* subtle veil: keeps the text crisp while the robot stays clearly visible */}
+          <div
+            className={`pointer-events-none absolute inset-0 transition-colors duration-300 ${
+              isDark ? "bg-[#090c12]/48" : "bg-[#E9E6DF]/28"
+            }`}
+          />
 
           {originRect && (
             <motion.div
@@ -147,7 +156,7 @@ export default function AboutClicktots({ open, originRect, onClose, onExploreWor
             animate={{ opacity: 1, transition: { delay: 0.45, duration: 0.3 } }}
             exit={{ opacity: 0, transition: { duration: 0.15 } }}
           >
-            <BackButton tone="light" label="Back to home" onClick={onClose} />
+            <BackButton tone={isDark ? "dark" : "light"} label="Back to home" onClick={onClose} />
           </motion.div>
         </motion.div>
       )}

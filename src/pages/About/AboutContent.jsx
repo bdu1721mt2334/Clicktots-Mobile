@@ -295,14 +295,14 @@ export default function AboutContent({ scrollRef, onExploreWork, onClose }) {
   return (
     <div ref={rootRef} className="ab">
       {/* SECTION 1: About Clicktots Technologies */}
-      <section className="mx-auto max-w-7xl px-6 pb-8 pt-24 sm:px-12 md:px-16 lg:pt-32">
-        <div className="grid gap-10 border-b border-neutral-400/50 pb-14 lg:grid-cols-12 lg:items-end">
+      <section className="mx-auto max-w-7xl px-6 pb-8 pt-32 sm:px-12 sm:pt-36 md:px-16 lg:pt-40">
+        <div className="ab-divider grid gap-10 border-b pb-14 lg:grid-cols-12 lg:items-end">
           <div className="lg:col-span-7">
             <BlurReveal
               as="p"
               text="About Clicktots Technologies"
               delay={0.05}
-              className="mb-4 block text-[0.65rem] uppercase tracking-[0.2em] text-neutral-700"
+              className="ab-muted mb-4 block text-[0.65rem] uppercase tracking-[0.2em]"
             />
             <BlurReveal
               as="h1"
@@ -312,7 +312,7 @@ export default function AboutContent({ scrollRef, onExploreWork, onClose }) {
               duration={1.1}
               blur={14}
               y={18}
-              className="block text-[clamp(1.5rem,3.2vw+0.5rem,2.9rem)] font-normal leading-[1.2] text-[#262626]"
+              className="ab-ink block text-[clamp(1.5rem,3.2vw+0.5rem,2.9rem)] font-normal leading-[1.2]"
             />
           </div>
           <div className="lg:col-span-5">
@@ -321,7 +321,7 @@ export default function AboutContent({ scrollRef, onExploreWork, onClose }) {
               text="We are a digital marketing agency in Chennai. We help brands get found, get noticed and get chosen — with strategy, creative and performance marketing that work together instead of in silos."
               delay={0.32}
               stagger={0.03}
-              className="block text-[clamp(0.75rem,0.4vw+0.62rem,0.9rem)] leading-[1.9] text-[#333]"
+              className="ab-body block text-[clamp(0.75rem,0.4vw+0.62rem,0.9rem)] leading-[1.9]"
             />
           </div>
         </div>
@@ -339,14 +339,14 @@ export default function AboutContent({ scrollRef, onExploreWork, onClose }) {
                 duration={1.1}
                 blur={14}
                 y={18}
-                className="block text-[clamp(1.4rem,2.6vw+0.5rem,2.6rem)] font-normal leading-[1.2] text-[#262626]"
+                className="ab-ink block text-[clamp(1.4rem,2.6vw+0.5rem,2.6rem)] font-normal leading-[1.2]"
               />
               <BlurReveal
                 as="p"
                 text="End-to-end digital growth capabilities designed to turn attention into measurable revenue."
                 delay={0.25}
                 stagger={0.03}
-                className="mt-5 block max-w-sm text-[0.7rem] leading-[1.9] text-[#333] sm:text-[0.75rem]"
+                className="ab-body mt-5 block max-w-sm text-[0.7rem] leading-[1.9] sm:text-[0.75rem]"
               />
             </div>
 
@@ -356,14 +356,14 @@ export default function AboutContent({ scrollRef, onExploreWork, onClose }) {
                   <div className="ab-card px-6 py-5 sm:px-8 sm:py-6">
                     <div className="ab-card-content flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                       <div className="flex items-baseline gap-4 sm:w-1/2">
-                        <span className="text-[0.6rem] text-neutral-600">
+                        <span className="ab-muted text-[0.6rem]">
                           {String(i + 1).padStart(2, "0")}
                         </span>
-                        <h3 className="text-[clamp(0.8rem,0.8vw+0.5rem,1.05rem)] font-normal leading-snug text-[#262626]">
+                        <h3 className="ab-ink text-[clamp(0.8rem,0.8vw+0.5rem,1.05rem)] font-normal leading-snug">
                           {name}
                         </h3>
                       </div>
-                      <p className="text-[0.66rem] leading-[1.8] text-[#2e2e2e] sm:w-5/12">
+                      <p className="ab-body text-[0.66rem] leading-[1.8] sm:w-5/12">
                         {text}
                       </p>
                     </div>
@@ -439,7 +439,7 @@ export default function AboutContent({ scrollRef, onExploreWork, onClose }) {
 
       {/* SECTION 4: Explore Our Work CTA */}
       <section className="mx-auto max-w-7xl px-6 pb-24 pt-8 sm:px-12 md:px-16">
-        <div className="flex flex-col items-start justify-between gap-6 rounded-[4px] bg-[#262626] px-8 py-9 text-white sm:flex-row sm:items-center sm:px-12">
+        <div className="ab-cta-box flex flex-col items-start justify-between gap-6 rounded-2xl px-8 py-9 sm:flex-row sm:items-center sm:px-12">
           <div>
             <BlurReveal
               as="h3"
@@ -453,7 +453,7 @@ export default function AboutContent({ scrollRef, onExploreWork, onClose }) {
               text="See how we bring strategy, creative, and performance together."
               delay={0.25}
               stagger={0.03}
-              className="mt-2 block text-[0.68rem] leading-[1.8] text-neutral-300"
+              className="ab-cta-sub mt-2 block text-[0.68rem] leading-[1.8]"
             />
           </div>
           <button

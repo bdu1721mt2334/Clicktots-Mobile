@@ -21,7 +21,7 @@ export default function CareerPage({ onOpenRole, returning = false, onReturnMeas
   return (
     <div className="min-h-full pb-24">
       {/* 1. Hero Section with Studio Image + BlurReveal */}
-      <section className="relative mx-auto max-w-6xl px-5 pt-24 pb-12 sm:px-8 sm:pt-28">
+      <section className="relative mx-auto max-w-6xl px-5 pt-32 pb-12 sm:px-8 sm:pt-36">
         <div className="text-center max-w-3xl mx-auto mb-10">
           <motion.span
             initial={{ opacity: 0, y: 10 }}

@@ -110,7 +110,14 @@ function FAQFlowField({ active }) {
           if (x === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         }
-        ctx.strokeStyle = accent ? "rgba(10,132,255,0.55)" : "rgba(67,67,67,0.17)";
+        const isDark = document.documentElement.dataset.siteTheme === "dark";
+        ctx.strokeStyle = accent
+          ? isDark
+            ? "rgba(94,176,255,0.52)"
+            : "rgba(10,132,255,0.55)"
+          : isDark
+            ? "rgba(255,255,255,0.14)"
+            : "rgba(67,67,67,0.17)";
         ctx.lineWidth = accent ? 1.3 : 1;
         ctx.stroke();
       }
@@ -279,7 +286,7 @@ export default function FAQChatAccordion({
       {/* same background as Key Facts: #D2D2D2 at the top fading to white */}
       <div
         aria-hidden="true"
-        className="absolute inset-0 z-0 bg-[linear-gradient(0deg,#FFFFFF_0%,#D2D2D2_100%)]"
+        className="faq-bg absolute inset-0 z-0 bg-[linear-gradient(0deg,#FFFFFF_0%,#D2D2D2_100%)]"
       />
 
       <FAQFlowField active={inView || reduced} />
@@ -305,20 +312,20 @@ export default function FAQChatAccordion({
         {/* date separator draws outward from the middle */}
         <div className="mb-9 flex items-center gap-3">
           <div
-            className="h-px flex-1 origin-right bg-[#9c9c9c]/60"
+            className="faq-sep-line h-px flex-1 origin-right bg-[#9c9c9c]/60"
             style={{
               transform: inView || reduced ? "scaleX(1)" : "scaleX(0)",
               transition: `transform 1.3s ${EXPO_STRONG} 0.55s`,
             }}
           />
           <span
-            className="text-[clamp(11px,0.9vw,14px)] font-medium text-[#434343]/60"
+            className="faq-sep-label text-[clamp(11px,0.9vw,14px)] font-medium text-[#434343]/60"
             style={{ opacity: inView || reduced ? 1 : 0, transition: "opacity .9s ease .9s" }}
           >
             Today
           </span>
           <div
-            className="h-px flex-1 origin-left bg-[#9c9c9c]/60"
+            className="faq-sep-line h-px flex-1 origin-left bg-[#9c9c9c]/60"
             style={{
               transform: inView || reduced ? "scaleX(1)" : "scaleX(0)",
               transition: `transform 1.3s ${EXPO_STRONG} 0.55s`,
@@ -346,7 +353,7 @@ export default function FAQChatAccordion({
                 >
                   <motion.button
                     type="button"
-                    className="max-w-[88%] cursor-pointer rounded-2xl rounded-br-[6px] bg-[#2F3135] px-5 py-3.5 text-left text-[clamp(13px,1.05vw,17px)] font-medium text-[#f1f1f1] outline-none transition-colors hover:bg-[#434343] focus-visible:ring-2 focus-visible:ring-[#c6f35c]"
+                    className="faq-q-btn max-w-[88%] cursor-pointer rounded-2xl rounded-br-[6px] bg-[#2F3135] px-5 py-3.5 text-left text-[clamp(13px,1.05vw,17px)] font-medium text-[#f1f1f1] outline-none transition-colors hover:bg-[#434343] focus-visible:ring-2 focus-visible:ring-[#c6f35c]"
                     whileTap={{ scale: 0.98 }}
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                     onClick={() => handleClick(i)}
@@ -378,7 +385,7 @@ export default function FAQChatAccordion({
                       }}
                     >
                       <div className="flex justify-start pt-2">
-                        <div className="max-w-[88%] overflow-hidden rounded-2xl rounded-bl-[6px] bg-[#e6e4e2] shadow-[0_1px_0_rgba(255,255,255,.7)_inset,0_6px_18px_-10px_rgba(0,0,0,.25)]">
+                        <div className="faq-a-box max-w-[88%] overflow-hidden rounded-2xl rounded-bl-[6px] bg-[#e6e4e2] shadow-[0_1px_0_rgba(255,255,255,.7)_inset,0_6px_18px_-10px_rgba(0,0,0,.25)]">
                           {/* typing dots (collapse when the answer is ready) */}
                           <div
                             className="grid"
@@ -392,7 +399,7 @@ export default function FAQChatAccordion({
                                 {[0, 0.15, 0.3].map((d) => (
                                   <span
                                     key={d}
-                                    className="inline-block h-[5px] w-[5px] rounded-full bg-[#434343]/50"
+                                    className="faq-a-dot inline-block h-[5px] w-[5px] rounded-full bg-[#434343]/50"
                                     style={{ animation: `faqChatDot 1.2s ease-in-out ${d}s infinite` }}
                                   />
                                 ))}
@@ -410,7 +417,7 @@ export default function FAQChatAccordion({
                           >
                             <div className="overflow-hidden">
                               <p
-                                className="px-5 py-3.5 text-[clamp(13px,1.05vw,17px)] leading-relaxed text-[#2F3135]"
+                                className="faq-a-text px-5 py-3.5 text-[clamp(13px,1.05vw,17px)] leading-relaxed text-[#2F3135]"
                                 data-text-fade="off"
                                 style={{
                                   opacity: hasAnswer ? 1 : 0,

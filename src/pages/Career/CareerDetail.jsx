@@ -109,7 +109,7 @@ export default function CareerDetail({ role, flying = false, onHeroMeasured, onB
   const labelCls = "ct-label block text-xs font-mono uppercase mb-1.5";
 
   return (
-    <div id="career-role-top" className="min-h-full px-5 pt-24 pb-24 sm:px-8">
+    <div id="career-role-top" className="min-h-full px-5 pt-32 pb-24 sm:px-8 sm:pt-36">
       <div className="mx-auto max-w-4xl">
         {/* step 2 -> step 1: the overlay's "All roles" Back pill (under the navbar) does this now */}
         <button

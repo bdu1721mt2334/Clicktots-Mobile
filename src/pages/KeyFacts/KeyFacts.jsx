@@ -23,7 +23,8 @@ import { PORTFOLIO_SLIDES } from "@/components/StackSlider/projects";
 import "./KeyFacts.css";
 
 // the colour Key Facts' background turns into = the first Projects slide's background
-const PROJECTS_BG = PORTFOLIO_SLIDES[0].washColor;
+const PROJECTS_BG_DARK = PORTFOLIO_SLIDES[0].washColor;
+const PROJECTS_BG_LIGHT = "#E9E6DF";
 
 /* ════════════════════════════════════════════════════════════════════
    CONTENT — edit everything here.
@@ -286,7 +287,7 @@ function LinePlus({ fade }) {
       >
         <motion.div
           aria-hidden="true"
-          className="absolute left-1/2 top-1/2 h-px -translate-x-1/2 -translate-y-1/2 bg-[#434343]/15"
+          className="kf-line-bar absolute left-1/2 top-1/2 h-px -translate-x-1/2 -translate-y-1/2 bg-[#434343]/15"
           style={{ width }}
         />
         <motion.svg
@@ -296,11 +297,11 @@ function LinePlus({ fade }) {
           viewBox="0 0 13 13"
           fill="none"
           aria-hidden="true"
-          className="relative h-4 w-4 lg:h-[13px] lg:w-[13px]"
+          className="kf-plus-svg relative h-4 w-4 text-[#272727] lg:h-[13px] lg:w-[13px]"
           style={{ rotate, x: springX }}
         >
-          <line x1="6.5" y1="0" x2="6.5" y2="13" strokeWidth="1" stroke="#272727" />
-          <line x1="0" y1="6.5" x2="13" y2="6.5" strokeWidth="1" stroke="#272727" />
+          <line x1="6.5" y1="0" x2="6.5" y2="13" strokeWidth="1" stroke="currentColor" />
+          <line x1="0" y1="6.5" x2="13" y2="6.5" strokeWidth="1" stroke="currentColor" />
         </motion.svg>
       </div>
     </motion.div>
@@ -390,7 +391,7 @@ function MobileFactsSlider({ title, children }) {
           {Array.from({ length: count }, (_, i) => (
             <span
               key={i}
-              className="h-1.5 rounded-full bg-[#434343] transition-all duration-300"
+              className="kf-dot h-1.5 rounded-full bg-[#434343] transition-all duration-300"
               style={{ width: i === active ? 22 : 6, opacity: i === active ? 0.85 : 0.25 }}
             />
           ))}
@@ -400,7 +401,7 @@ function MobileFactsSlider({ title, children }) {
   );
 }
 
-export default function KeyFacts({ sectionRef: externalRef }) {
+export default function KeyFacts({ sectionRef: externalRef, theme = "light" }) {
   const internalRef = useRef(null);
   const isDesktop = useMediaQuery("(min-width: 768px)");
   // phones: the cards are pinned (tall); the blue fade into Projects follows the partner strip below them instead
@@ -442,9 +443,9 @@ export default function KeyFacts({ sectionRef: externalRef }) {
   const partnerItem = (name, key) => (
     <div
       key={key}
-      className="flex items-center justify-center border-r border-[#9c9c9c]/15 px-6 last:border-0 lg:px-10"
+      className="kf-partner-cell flex items-center justify-center border-r border-[#9c9c9c]/15 px-6 last:border-0 lg:px-10"
     >
-      <span className="whitespace-nowrap text-[1.1rem] font-semibold tracking-[-0.04em] text-[#434343]/70">
+      <span className="kf-partner-name whitespace-nowrap text-[1.1rem] font-semibold tracking-[-0.04em] text-[#434343]/70">
         {name}
       </span>
     </div>
@@ -477,12 +478,12 @@ export default function KeyFacts({ sectionRef: externalRef }) {
             enabled={isDesktop}
             className={cn(
               CARD_BASE,
-              "flex flex-col justify-between bg-[#e6e4e2] p-8 text-center lg:p-10"
+              "kf-card-projects flex flex-col justify-between bg-[#e6e4e2] p-8 text-center lg:p-10"
             )}
           >
             <span className="kf-title block text-[#434343]">{projects.label}</span>
             <div className="relative flex flex-1 flex-col items-center justify-center">
-              <div className="absolute left-1/2 top-1/2 h-[9.5rem] w-[9.5rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white lg:h-[10.5rem] lg:w-[10.5rem]" />
+              <div className="kf-card-circle absolute left-1/2 top-1/2 h-[9.5rem] w-[9.5rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white lg:h-[10.5rem] lg:w-[10.5rem]" />
               <div className="relative z-[2] flex items-center">
                 <Stat value={projects.value} duration={1.85} className="text-[#434343]" />
               </div>
@@ -525,13 +526,13 @@ export default function KeyFacts({ sectionRef: externalRef }) {
       {/* background layers: light gradient, with the Projects colour fading in over it */}
       <div
         aria-hidden="true"
-        className="absolute inset-0 z-0 bg-[linear-gradient(0deg,#FFFFFF_0%,#D2D2D2_100%)]"
+        className="kf-bg-grad absolute inset-0 z-0 bg-[linear-gradient(0deg,#FFFFFF_0%,#D2D2D2_100%)]"
       />
-      {/* Stays light until 50% scroll through Key Facts, then fades to 100% Projects blue */}
+      {/* Stays on base theme until 50% scroll through Key Facts, then fades into Projects */}
       <motion.div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 z-0"
-        style={{ backgroundColor: PROJECTS_BG, opacity: blueOpacity }}
+        style={{ backgroundColor: theme === "dark" ? PROJECTS_BG_DARK : PROJECTS_BG_LIGHT, opacity: blueOpacity }}
       />
 
       <div className="relative z-10 mx-auto max-w-[1180px] px-6 lg:px-10">
@@ -558,7 +559,7 @@ export default function KeyFacts({ sectionRef: externalRef }) {
             by="word"
             stagger={0.05}
             text={KEY_FACTS.partnersTitle}
-            className="kf-title block text-center text-black"
+            className="kf-partners-title kf-title block text-center text-black"
           />
           <div className="-mx-4 hidden justify-center lg:-mx-10 lg:flex">
             {KEY_FACTS.partners.map((p) => partnerItem(p, p))}

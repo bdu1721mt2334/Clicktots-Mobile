@@ -388,21 +388,33 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  max-width: 78%;
-  padding: 14px 16px;
+  max-width: 80%;
+  padding: 13px 16px;
   border-radius: 14px;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 0 24px color-mix(in srgb, var(--c) 55%, transparent), inset 0 0 18px rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  background: linear-gradient(145deg, rgba(6, 11, 24, 0.9), rgba(12, 20, 38, 0.84));
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  backdrop-filter: blur(12px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.52);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.72),
+    0 0 24px color-mix(in srgb, var(--c) 55%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
   transform: rotateY(-16deg) rotateX(6deg);
   animation: lp-float 4.2s ease-in-out infinite;
 }
+.lp-panel svg {
+  flex-shrink: 0;
+  color: #ffffff;
+  filter: drop-shadow(0 1px 6px rgba(0, 0, 0, 0.9));
+}
 .lp-panel b {
-  font-weight: 500;
+  font-weight: 700;
+  font-synthesis-weight: auto;
   font-size: 15px;
-  line-height: 1.2;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+  line-height: 1.25;
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95);
 }
 .lp-chip {
   position: absolute;
@@ -414,13 +426,22 @@
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  box-shadow: 0 0 14px color-mix(in srgb, var(--c) 50%, transparent);
+  color: #ffffff;
+  background: linear-gradient(145deg, rgba(6, 11, 24, 0.9), rgba(12, 20, 38, 0.82));
+  -webkit-backdrop-filter: blur(10px) saturate(145%);
+  backdrop-filter: blur(10px) saturate(145%);
+  border: 1px solid rgba(255, 255, 255, 0.54);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.72),
+    0 0 16px color-mix(in srgb, var(--c) 55%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26);
   transform: rotateY(-18deg);
   animation: lp-float 3.4s ease-in-out infinite;
   animation-delay: calc(var(--k) * -0.9s);
+}
+.lp-chip svg {
+  color: #ffffff;
+  filter: drop-shadow(0 1px 5px rgba(0, 0, 0, 0.9));
 }
 @keyframes lp-float {
   50% {
@@ -756,7 +777,7 @@
 }
 .rk-hud {
   left: 24px;
-  top: 22px;
+  top: 132px;
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -871,11 +892,11 @@
   border-radius: 6px;
 }
 
-/* the film ends by fading into the light page ("What's included" + tools follow) */
+/* the film ends by fading into the themed space/paper page below ("What's included" + tools follow) */
 .rk-fade {
   inset: 0;
   z-index: 8;
-  background: #f2f2f0;
+  background: var(--svc-below-bg, #e9e6df);
   opacity: 0;
 }
 
@@ -905,7 +926,7 @@
     justify-content: flex-start;
     align-items: center;
     gap: 8px;
-    padding: 46px 16px 26svh;
+    padding: 116px 16px 26svh;
   }
   .rk-scene > .lp {
     order: -1;
@@ -921,6 +942,12 @@
   .lp-holo {
     transform: scale(0.62);
     transform-origin: 100% 0;
+  }
+  .lp-panel,
+  .lp-chip {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: rgba(6, 11, 24, 0.94);
   }
   .lp-team {
     margin-top: 5px;
@@ -955,19 +982,15 @@
     line-height: 1.35;
   }
   .rk-hud {
-    left: 14px;
-    top: 14px;
+    left: 16px;
+    top: 116px;
     padding: 4px 10px;
     font-size: 8.5px;
   }
-
-
-
-
- .rk-result {
+  .rk-result {
     left: 14px;
     right: 56px;
-    top: 16px;
+    top: 118px;
     width: auto;
     max-width: 310px;
     padding: 12px 14px;

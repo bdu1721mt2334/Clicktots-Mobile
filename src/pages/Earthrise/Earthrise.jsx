@@ -24,6 +24,8 @@ const FIT = 'absolute inset-0 size-full object-cover object-[58%_50%] md:object-
 export function Earthrise() {
   const rootRef = useRef(null);
   const layerRefs = useRef({});
+  const veilRef = useRef(null);
+  const dustCanvasRef = useRef(null);
   const titleRef = useRef(null);
   const word1Ref = useRef(null);
   const word2Ref = useRef(null);
@@ -92,7 +94,7 @@ export function Earthrise() {
   };
 
   const handlePointerMove = (e) => {
-    if (reducedRef.current) return;
+    if (reducedRef.current || e.pointerType !== 'mouse') return;
     const el = clickBrandRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
@@ -128,6 +130,96 @@ export function Earthrise() {
     let lastP = -1;
     let lastTime = 0;
     let fxCtx = null;
+    let dustCtx = null;
+    let dustW = 0;
+    let dustH = 0;
+    let dustDpr = 1;
+    let motes = [];
+    let dustCleared = false;
+
+    const initDust = () => {
+      const c = dustCanvasRef.current;
+      if (!c) return;
+      const w = c.clientWidth;
+      const h = c.clientHeight;
+      if (!w || !h) return;
+      const mobile = w < 768;
+      dustW = w;
+      dustH = h;
+      dustDpr = mobile ? 1 : Math.min(window.devicePixelRatio || 1, 2);
+      c.width = Math.round(w * dustDpr);
+      c.height = Math.round(h * dustDpr);
+      dustCtx = c.getContext('2d');
+      const count = mobile ? 44 : 96;
+      let seed = 1337;
+      const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+      motes = Array.from({ length: count }, () => {
+        const x = rnd();
+        const y = rnd();
+        const dx = x - 0.5;
+        const dy = y - 0.5;
+        const d = Math.hypot(dx, dy) || 0.01;
+        return {
+          x,
+          y,
+          vx: (rnd() - 0.5) * 0.008,
+          vy: (rnd() - 0.5) * 0.006 - 0.002,
+          dirX: dx / d,
+          dirY: dy / d,
+          r: 0.65 + rnd() * 1.45,
+          a: 0.25 + rnd() * 0.68,
+          spread: 0.18 + rnd() * 0.34,
+        };
+      });
+    };
+
+    const drawDust = (dt, veilOut) => {
+      if (!dustCtx || !dustW || !dustH) return;
+      if (veilOut >= 0.999) {
+        if (!dustCleared) {
+          dustCtx.setTransform(1, 0, 0, 1, 0, 0);
+          dustCtx.clearRect(0, 0, dustW * dustDpr, dustH * dustDpr);
+          dustCleared = true;
+        }
+        return;
+      }
+      dustCleared = false;
+      dustCtx.setTransform(dustDpr, 0, 0, dustDpr, 0, 0);
+      dustCtx.clearRect(0, 0, dustW, dustH);
+      const fade = 1 - veilOut;
+      const move = !reducedRef.current;
+      dustCtx.fillStyle = '#eef4ff';
+      for (let i = 0; i < motes.length; i++) {
+        const m = motes[i];
+        if (move) {
+          m.x += m.vx * dt;
+          m.y += m.vy * dt;
+          if (m.x < -0.02) m.x = 1.02;
+          else if (m.x > 1.02) m.x = -0.02;
+          if (m.y < -0.02) m.y = 1.02;
+          else if (m.y > 1.02) m.y = -0.02;
+        }
+        const scatter = veilOut * m.spread;
+        const px = (m.x + m.dirX * scatter) * dustW;
+        const py = (m.y + m.dirY * scatter) * dustH;
+        const alpha = m.a * fade;
+        if (alpha <= 0.01) continue;
+        dustCtx.globalAlpha = alpha;
+        dustCtx.beginPath();
+        dustCtx.arc(px, py, m.r, 0, Math.PI * 2);
+        dustCtx.fill();
+      }
+      dustCtx.globalAlpha = 1;
+    };
+
+    initDust();
+    const dustRo = typeof ResizeObserver !== 'undefined' && dustCanvasRef.current
+      ? new ResizeObserver(() => {
+          initDust();
+          drawDust(0, easeOutCubic(range(Math.max(0, lastP), 0, 0.16)));
+        })
+      : null;
+    if (dustRo && dustCanvasRef.current) dustRo.observe(dustCanvasRef.current);
 
     const set = (name, y, scale = 1, opacity = 1) => {
       const el = layerRefs.current[name];
@@ -153,36 +245,51 @@ export function Earthrise() {
       const ground = easeOutCubic(range(p, 0.30, 0.56));
       set('ground', lerp(36, 0, ground) - exit * 78, 1, 1);
 
-      if (p >= 0.18 && !burstFiredRef.current) {
+      // Opening atmospheric veil ("Scroll to clear the market noise") clears on initial scroll
+      const veilOut = easeOutCubic(range(p, 0, 0.16));
+      const veil = veilRef.current;
+      if (veil) {
+        const vo = 1 - veilOut;
+        veil.style.opacity = vo <= 0.001 ? '0' : vo.toFixed(3);
+        veil.style.visibility = vo <= 0.001 ? 'hidden' : 'visible';
+        veil.style.transform = veilOut <= 0.001 ? 'none' : `translate3d(0, ${(-veilOut * 24).toFixed(1)}px, 0)`;
+      }
+
+      if (p >= 0.18 && !burstFiredRef.current && window.innerWidth >= 768) {
         burstFiredRef.current = true;
         spawnBurst(0.5, 0.52, 34);
       } else if (p < 0.12) {
         burstFiredRef.current = false;
       }
 
-      // Hero headline is immediately visible at p = 0 and smoothly exits as astronaut rises
+      // Hero headline rises into view as the market-noise veil clears, then smoothly exits as astronaut rises
+      const tIn = easeOutCubic(range(p, 0.08, 0.22));
       const tOut = range(p, 0.36, 0.48);
+      const titleOp = tIn * (1 - tOut);
       const title = titleRef.current;
       if (title) {
-        title.style.opacity = String((1 - tOut).toFixed(3));
-        title.style.transform = `translate3d(0, ${(-p * 6).toFixed(3)}vh, 0)`;
+        title.style.opacity = titleOp <= 0.001 ? '0' : titleOp.toFixed(3);
+        title.style.visibility = titleOp <= 0.001 ? 'hidden' : 'visible';
+        title.style.transform = `translate3d(0, ${(lerp(3.5, 0, tIn) - p * 6).toFixed(3)}vh, 0)`;
         if (word1Ref.current) word1Ref.current.style.transform = 'none';
         if (word2Ref.current) word2Ref.current.style.transform = 'none';
         if (clickBladeRef.current) {
-          const bladeT = 0.85 + 0.15 * easeOutCubic(range(p, 0, 0.22));
+          const bladeT = 0.85 + 0.15 * easeOutCubic(range(p, 0.08, 0.28));
           clickBladeRef.current.style.transform = `scaleX(${bladeT.toFixed(3)})`;
-          clickBladeRef.current.style.opacity = String(((1 - tOut) * 0.9).toFixed(3));
+          clickBladeRef.current.style.opacity = String((titleOp * 0.9).toFixed(3));
         }
         if (clickGlowRef.current) {
-          const glowT = 0.7 + 0.3 * easeOutCubic(range(p, 0, 0.22));
-          clickGlowRef.current.style.opacity = String((glowT * 0.75 * (1 - tOut)).toFixed(3));
+          const glowT = 0.7 + 0.3 * easeOutCubic(range(p, 0.08, 0.28));
+          clickGlowRef.current.style.opacity = String((glowT * 0.75 * titleOp).toFixed(3));
           clickGlowRef.current.style.transform = `scale(${lerp(0.95, 1.08, glowT).toFixed(3)})`;
         }
       }
 
-      // Telemetry HUD visible right away, fades out on exit
+      // Telemetry HUD fades in once the veil clears, fades out on exit
       if (hudRef.current) {
-        hudRef.current.style.opacity = String((1 - range(p, 0.6, 0.7)).toFixed(3));
+        const hudOp = easeOutCubic(range(p, 0.1, 0.22)) * (1 - range(p, 0.6, 0.7));
+        hudRef.current.style.opacity = hudOp <= 0.001 ? '0' : hudOp.toFixed(3);
+        hudRef.current.style.visibility = hudOp <= 0.001 ? 'hidden' : 'visible';
       }
       const secs = p * 5400;
       if (clockRef.current) {
@@ -195,14 +302,21 @@ export function Earthrise() {
 
     // Paint initial frame immediately so there is zero flash on mount
     applyInitial(0);
+    drawDust(0, 0);
 
-    return onFrame((time) => {
+    const stopFrame = onFrame((time) => {
       const dt = lastTime ? Math.min(0.05, (time - lastTime) / 1000) : 1 / 60;
       lastTime = time;
       const root = rootRef.current;
       if (!root) return;
       const { p, rect } = pinProgress(root);
       if (rect.bottom < 0) return;
+
+      // Gently drift cosmic dust motes ONLY while the opening veil is visible (0ms cost after p >= 0.16)
+      const veilOut = easeOutCubic(range(p, 0, 0.16));
+      if (veilOut < 0.999 || !dustCleared) {
+        drawDust(dt, veilOut);
+      }
 
       // Render "Click" spark particle physics ONLY when sparks are active
       const sparks = sparksRef.current;
@@ -291,6 +405,10 @@ export function Earthrise() {
       lastP = p;
       applyInitial(p);
     });
+    return () => {
+      stopFrame();
+      dustRo?.disconnect();
+    };
   }, []);
 
   const line2Prefix = hero.line2.replace(/Click$/, '');
@@ -303,7 +421,7 @@ export function Earthrise() {
         ref={(el) => {
           if (el) layerRefs.current[name] = el;
         }}
-        className={`absolute inset-0 will-change-transform ${extra}`}
+        className={`absolute inset-0 lg:will-change-transform ${extra}`}
         style={isInitial ? undefined : { opacity: 0 }}
       >
         <picture>
@@ -326,7 +444,7 @@ export function Earthrise() {
   };
 
   return (
-    <section id="top" ref={rootRef} aria-label="Earthrise" className="relative" style={{ height: `${STAGE_VH}svh` }}>
+    <section id="top" data-nav-surface="dark" ref={rootRef} aria-label="Earthrise" className="relative" style={{ height: `${STAGE_VH}svh` }}>
       <style>{`
         .click-chrome-glyph {
           background-image:
@@ -349,11 +467,53 @@ export function Earthrise() {
       <div className="sticky top-0 h-screen-s overflow-hidden bg-void">
         {ORDER.slice(0, 3).map((n) => layer(n))}
 
-        {/* Hero Headline + Live Physics "Click" Logo — immediately visible on first paint */}
+        {/* Opening cosmic mist & drifting dust veil — exact market-noise atmosphere, clears smoothly on scroll */}
+        <div
+          ref={veilRef}
+          className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center px-5 text-center"
+          style={{
+            opacity: 1,
+            background:
+              'radial-gradient(ellipse 68% 54% at 28% 36%, rgba(162, 182, 218, 0.34) 0%, rgba(78, 96, 132, 0.24) 42%, transparent 74%), radial-gradient(ellipse 52% 44% at 62% 44%, rgba(112, 134, 174, 0.20) 0%, rgba(36, 48, 74, 0.18) 48%, transparent 78%), radial-gradient(ellipse 80% 60% at 20% 52%, rgba(128, 148, 184, 0.22) 0%, transparent 65%), linear-gradient(180deg, rgba(4, 7, 13, 0.42) 0%, rgba(18, 26, 42, 0.32) 48%, rgba(4, 7, 13, 0.56) 100%)',
+          }}
+        >
+          <canvas
+            ref={dustCanvasRef}
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 size-full"
+          />
+          <p
+            className="relative z-10 font-hero uppercase text-[#d7e0f0]/75"
+            style={{
+              fontSize: 'clamp(0.6rem, 1.05vw, 0.85rem)',
+              letterSpacing: '0.16em',
+              textShadow: '0 1px 10px rgba(0, 6, 18, 0.8)',
+            }}
+          >
+            AI-POWERED DIGITAL MARKETING AGENCY &middot; CHENNAI
+          </p>
+          <p
+            className="relative z-10 mt-3 font-hero uppercase text-white/95 tracking-[0.22em] md:tracking-[0.34em]"
+            style={{
+              fontSize: 'clamp(0.72rem, 1.32vw, 1.1rem)',
+              textShadow: '0 2px 18px rgba(0, 6, 18, 0.85)',
+            }}
+          >
+            SCROLL TO CLEAR THE MARKET NOISE
+          </p>
+          <span
+            aria-hidden="true"
+            className="relative z-10 mt-5 inline-block text-[0.95rem] text-[#d7e0f0]/75"
+          >
+            &darr;
+          </span>
+        </div>
+
+        {/* Hero Headline + Live Physics "Click" Logo — fades in as the veil clears */}
         <div
           ref={titleRef}
           className="pointer-events-none absolute inset-x-0 top-[26%] px-3 sm:px-6 text-center md:top-[30%]"
-          style={{ opacity: 1, perspective: '1000px' }}
+          style={{ opacity: 0, visibility: 'hidden', perspective: '1000px' }}
         >
           {/* soft dark halo behind the words only – pure radial gradient (no GPU blur filter) */}
           <span
@@ -365,14 +525,14 @@ export function Earthrise() {
             style={{ fontSize: 'clamp(1rem, 3.8vw, 4rem)', lineHeight: 1.15 }}
           >
             <span className="block overflow-hidden pb-1">
-              <span ref={word1Ref} className="title-word-1 inline-block will-change-transform">
+              <span ref={word1Ref} className="title-word-1 inline-block lg:will-change-transform">
                 {hero.line1}
               </span>
             </span>
 
             <span className="block pb-2">
               <span className="inline-block overflow-hidden align-baseline pb-1">
-                <span ref={word2Ref} className="title-word-2 inline-block will-change-transform">
+                <span ref={word2Ref} className="title-word-2 inline-block lg:will-change-transform">
                   {line2Prefix}
                 </span>
               </span>
@@ -393,7 +553,7 @@ export function Earthrise() {
                   }
                 }}
                 aria-label="Click brand mark"
-                className="pointer-events-auto relative ml-[0.14em] inline-flex cursor-pointer items-baseline select-none will-change-transform focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300"
+                className="pointer-events-auto relative ml-[0.14em] inline-flex cursor-pointer items-baseline select-none lg:will-change-transform focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300"
                 style={{ perspective: '900px' }}
               >
                 <canvas
@@ -419,7 +579,7 @@ export function Earthrise() {
                       ref={(el) => {
                         clickLetterRefs.current[idx] = el;
                       }}
-                      className="click-chrome-glyph inline-block font-extrabold tracking-[-0.03em] will-change-transform transition-transform duration-150 ease-out"
+                      className="click-chrome-glyph inline-block font-extrabold tracking-[-0.03em] lg:will-change-transform transition-transform duration-150 ease-out"
                     >
                       {char}
                     </span>
@@ -442,12 +602,12 @@ export function Earthrise() {
 
         {ORDER.slice(3).map((n) => layer(n))}
 
-        {/* Telemetry HUD — visible immediately */}
+        {/* Telemetry HUD — fades in once the veil clears */}
         <div
           ref={hudRef}
           aria-hidden="true"
           className="pointer-events-none absolute inset-4 font-telemetry text-[0.625rem] tracking-[0.14em] text-regolith/75 uppercase sm:inset-6 md:text-label"
-          style={{ opacity: 1 }}
+          style={{ opacity: 0, visibility: 'hidden' }}
         >
           <div className="brackets absolute inset-0 text-regolith/40" />
           <div className="absolute top-16 left-3 space-y-1 md:top-20 md:left-4">

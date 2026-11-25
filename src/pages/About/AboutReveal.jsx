@@ -208,6 +208,8 @@ export function AboutReveal() {
 
   return (
     <section
+      data-nav-surface="dark"
+      data-nav-section="about"
       className="relative z-10 w-full"
       style={{ height: `${TRACK_VH + SHUTTER_VH}vh`, marginTop: `-${100 + OVERLAP_VH}vh` }}
     >

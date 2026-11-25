@@ -222,7 +222,28 @@ export function GlassTabBar({
           bezel={24}
           refraction={1.15}
           dispersion={0.08}
-          blur={5}
+          blur={tone === "light" ? 12 : 6}
+          style={
+            tone === "light"
+              ? {
+                  "--fd-lg-fill": "rgba(246, 243, 236, 0.94)",
+                  "--fd-lg-fg": "#121110",
+                  "--fd-lg-sat": "1.35",
+                  "--fd-lg-bright": "1.02",
+                  "--fd-lg-spec-o": "0.5",
+                  "--fd-lg-shadow":
+                    "0 12px 30px -12px rgba(18, 17, 16, 0.28), 0 2px 6px rgba(18, 17, 16, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 0 rgba(18, 17, 16, 0.08)",
+                }
+              : {
+                  "--fd-lg-fill": "rgba(10, 14, 22, 0.56)",
+                  "--fd-lg-fg": "#FFFFFF",
+                  "--fd-lg-sat": "1.6",
+                  "--fd-lg-bright": "1.05",
+                  "--fd-lg-spec-o": "0.9",
+                  "--fd-lg-shadow":
+                    "0 12px 32px -14px rgba(0, 0, 0, 0.58), 0 1px 2px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 rgba(255, 255, 255, 0.08)",
+                }
+          }
         >
           <div ref={list} className={`fd-gtab-list${minimized ? " is-min" : ""}`} role="tablist" aria-orientation="horizontal" onKeyDown={onKey}>
             <span ref={lens} className="fd-gtab-lens" aria-hidden="true">
@@ -299,21 +320,28 @@ const tabCss = `
 /* normal-size text (the site font is very wide, so 11.5px reads like ~14px of a normal font) */
 .fd-gtab .fd-gtab-tab,.fd-gtab .fd-gtab-lbl{font-size:11.5px;line-height:1;font-weight:400;letter-spacing:0.02em}
 
-/* the bar: clear glass, bright rim, a whisper of dark so white text stays readable on light areas */
+/* the bar: clear glass, bright rim, a whisper of dark so white text stays readable on dark areas */
 .fd-gtab-bar{flex:1 1 auto;min-width:0;height:var(--fd-gtab-h);padding:var(--fd-gtab-pad);max-width:760px;
-  --fd-lg-fill:rgba(12,16,24,0.08);--fd-lg-sat:1.6;--fd-lg-bright:1.05;--fd-lg-spec-o:0.9;
+  --fd-lg-fill:rgba(10,14,22,0.42);--fd-lg-sat:1.6;--fd-lg-bright:1.05;--fd-lg-spec-o:0.9;
   --fd-lg-shadow:0 12px 32px -14px rgba(0,0,0,0.55),0 1px 2px rgba(0,0,0,0.2),inset 0 1px 0 rgba(255,255,255,0.35),inset 0 -1px 0 rgba(255,255,255,0.08);
-  transition:max-width var(--fd-dur-3) var(--fd-ease-out),height var(--fd-dur-3) var(--fd-ease-out)}
+  transition:max-width var(--fd-dur-3) var(--fd-ease-out),height var(--fd-dur-3) var(--fd-ease-out),background-color 0.25s ease,box-shadow 0.25s ease}
 .fd-gtab-bar::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
   background:linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0) 45%,rgba(255,255,255,0) 70%,rgba(255,255,255,0.06));
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,0.16)}
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,0.18)}
+/* light-surface bar: crisp warm frosted glass with strong hairline border & bold black text */
+.fd-gtab--light .fd-gtab-bar{
+  --fd-lg-fill:rgba(246,243,236,0.9);--fd-lg-sat:1.35;--fd-lg-bright:1.02;--fd-lg-spec-o:0.55;
+  --fd-lg-shadow:0 12px 30px -12px rgba(18,17,16,0.28),0 2px 6px rgba(18,17,16,0.08),inset 0 1px 0 rgba(255,255,255,0.92),inset 0 -1px 0 rgba(18,17,16,0.06)}
+.fd-gtab--light .fd-gtab-bar::after{
+  background:linear-gradient(180deg,rgba(255,255,255,0.55),rgba(255,255,255,0) 48%,rgba(18,17,16,0.03));
+  box-shadow:inset 0 0 0 1px rgba(18,17,16,0.16)}
 .fd-gtab.is-min .fd-gtab-bar{flex:0 0 auto;max-width:var(--fd-gtab-h)}
 .fd-gtab-list{position:relative;display:flex;align-items:center;height:100%;margin:0;padding:0 2px;touch-action:pan-y;user-select:none;-webkit-user-select:none}
 .fd-gtab-row{display:flex;align-items:center;height:100%;flex:1 1 auto;min-width:0}
 
 /* the lens: clear glass bubble, white specular top, iridescent (rainbow) rim like iOS */
 .fd-gtab-lens{position:absolute;left:0;top:2px;bottom:2px;width:0;margin:0;padding:0;border-radius:999px;pointer-events:none;transform-origin:50% 50%;will-change:transform,width;z-index:0;
-  background:radial-gradient(120% 140% at 50% 0%,rgba(255,255,255,0.16),rgba(255,255,255,0.04) 55%,rgba(255,255,255,0.08));
+  background:radial-gradient(120% 140% at 50% 0%,rgba(255,255,255,0.18),rgba(255,255,255,0.06) 55%,rgba(255,255,255,0.1));
   box-shadow:inset 0 1px 1px rgba(255,255,255,0.75),inset 0 -1px 1px rgba(255,255,255,0.18),inset 0 0 12px rgba(255,255,255,0.08),0 6px 18px -6px rgba(0,0,0,0.5);
   -webkit-backdrop-filter:blur(1.5px) saturate(1.8) brightness(1.12);backdrop-filter:blur(1.5px) saturate(1.8) brightness(1.12)}
 .fd-gtab-rim{position:absolute;inset:0;border-radius:inherit;padding:1.5px;pointer-events:none;opacity:0.7;
@@ -322,23 +350,27 @@ const tabCss = `
   filter:blur(0.4px);transition:opacity 0.25s}
 .fd-gtab.is-drag .fd-gtab-rim{opacity:1;filter:blur(0.6px) saturate(1.3)}
 .fd-gtab.is-drag .fd-gtab-lens{box-shadow:inset 0 1px 2px rgba(255,255,255,0.9),inset 0 -1px 2px rgba(255,255,255,0.25),inset 0 0 16px rgba(255,255,255,0.12),0 10px 24px -6px rgba(0,0,0,0.55)}
-.fd-gtab--light .fd-gtab-lens{background:rgba(255,255,255,0.4)}
+.fd-gtab--light .fd-gtab-lens{background:rgba(255,255,255,0.92);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,1),0 4px 12px -4px rgba(18,17,16,0.22),0 0 0 1px rgba(18,17,16,0.12)}
 
-/* tabs (white) */
+/* tabs (white on dark surfaces, bold black on light surfaces) */
 .fd-gtab-tab{position:relative;z-index:1;flex:1 1 auto;min-width:0;display:flex;align-items:center;justify-content:center;text-align:center;height:100%;margin:0;padding:0 15px;border:0;border-radius:999px;background:none;color:#FFFFFF;
   text-shadow:0 1px 2px rgba(0,0,0,0.45),0 0 10px rgba(0,0,0,0.25);cursor:pointer;-webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent;
-  opacity:0.92;transition:opacity var(--fd-dur-2) var(--fd-ease-out),transform var(--fd-dur-3) var(--fd-spring)}
+  opacity:0.94;transition:opacity var(--fd-dur-2) var(--fd-ease-out),color 0.2s ease,transform var(--fd-dur-3) var(--fd-spring)}
 .fd-gtab-tab:hover{opacity:1}
 .fd-gtab-tab:active{transform:scale(0.96);transition-duration:var(--fd-dur-1)}
 .fd-gtab-lbl{display:block;margin:0;padding:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .fd-gtab-tab:focus-visible{outline:2px solid color-mix(in srgb,var(--fd-gtab-accent) 70%,transparent);outline-offset:2px}
-.fd-gtab--light .fd-gtab-tab{color:rgba(20,20,25,0.85);text-shadow:none}
+.fd-gtab.fd-gtab--light .fd-gtab-tab,.fd-gtab.fd-gtab--light .fd-gtab-lbl,.fd-gtab.fd-gtab--light .fd-gtab-roll>span{font-weight:700 !important;font-synthesis-weight:auto !important}
+.fd-gtab.fd-gtab--light .fd-gtab-tab{color:#121110 !important;opacity:1 !important;text-shadow:none !important}
+.fd-gtab.fd-gtab--light .fd-gtab-tab:hover{color:#000000 !important;opacity:1 !important}
 
 /* the accent copy: only inside the lens – blue, glowing, slightly magnified */
 .fd-gtab-accent{position:absolute;inset:0;z-index:2;pointer-events:none;clip-path:inset(0 100% 0 0)}
 .fd-gtab-accent-row{display:flex;align-items:center;height:100%;padding:0 2px;transform:scale(1.07);will-change:transform}
 .fd-gtab-tab--ghost{cursor:default;opacity:1;color:var(--fd-gtab-accent);
   text-shadow:0 0 12px color-mix(in srgb,var(--fd-gtab-accent) 55%,transparent),0 1px 1px rgba(0,0,0,0.25)}
+.fd-gtab.fd-gtab--light .fd-gtab-tab--ghost{color:#0058cc !important;font-weight:700 !important;font-synthesis-weight:auto !important;text-shadow:none !important}
 /* text roll on hover */
 .fd-gtab-roll{display:grid;overflow:hidden;text-overflow:clip;padding:0.18em 0;margin:-0.18em 0}
 .fd-gtab-roll>span{grid-area:1/1;white-space:nowrap;transition:transform 0.5s cubic-bezier(0.22,1,0.36,1)}

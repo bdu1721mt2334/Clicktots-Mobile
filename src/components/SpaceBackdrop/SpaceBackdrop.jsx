@@ -233,17 +233,23 @@ export default function SpaceBackdrop({ variant = "journal", scrollRef, theme = 
       });
     };
 
-    const drawOrbit = (sy, dx, dy) => {
+    const drawOrbit = (light, sy, dx, dy) => {
       const R = Math.max(S.w, S.h) * 0.42;
       const cx = S.w * 0.95 + dx * 0.4;
       const cy = S.h * 1.08 + dy * 0.4 - Math.min(sy * 0.05, S.h * 0.08);
       /* orbits behind the planet (back halves) */
       const tilt = -0.2;
-      const orbits = [
-        { rx: R * 1.35, ry: R * 0.34, sp: 0.07, n: 2, col: "120,190,255" },
-        { rx: R * 1.75, ry: R * 0.46, sp: -0.045, n: 3, col: "230,168,46" },
-        { rx: R * 2.25, ry: R * 0.6, sp: 0.03, n: 2, col: "160,140,255" },
-      ];
+      const orbits = light
+        ? [
+            { rx: R * 1.35, ry: R * 0.34, sp: 0.07, n: 2, col: "30,72,145" },
+            { rx: R * 1.75, ry: R * 0.46, sp: -0.045, n: 3, col: "176,108,28" },
+            { rx: R * 2.25, ry: R * 0.6, sp: 0.03, n: 2, col: "72,64,148" },
+          ]
+        : [
+            { rx: R * 1.35, ry: R * 0.34, sp: 0.07, n: 2, col: "120,190,255" },
+            { rx: R * 1.75, ry: R * 0.46, sp: -0.045, n: 3, col: "230,168,46" },
+            { rx: R * 2.25, ry: R * 0.6, sp: 0.03, n: 2, col: "160,140,255" },
+          ];
       const ell = (o, from, to) => {
         g.beginPath();
         g.ellipse(cx, cy, o.rx, o.ry, tilt, from, to);
@@ -252,23 +258,35 @@ export default function SpaceBackdrop({ variant = "journal", scrollRef, theme = 
       g.setLineDash([2, 7]);
       g.lineWidth = 1;
       orbits.forEach((o) => {
-        g.strokeStyle = `rgba(${o.col},0.16)`;
+        g.strokeStyle = `rgba(${o.col},${light ? 0.14 : 0.16})`;
         ell(o, Math.PI, TAU);
       });
       g.setLineDash([]);
-      /* the planet: dark disc, blue atmosphere rim lit from the top-left */
+      /* the planet: deep navy in dark mode; translucent celestial mist sphere in day mode */
       const atm = g.createRadialGradient(cx, cy, R * 0.92, cx, cy, R * 1.18);
-      atm.addColorStop(0, "rgba(90,169,255,0.35)");
-      atm.addColorStop(0.35, "rgba(90,169,255,0.12)");
-      atm.addColorStop(1, "rgba(90,169,255,0)");
+      if (light) {
+        atm.addColorStop(0, "rgba(37,99,235,0.14)");
+        atm.addColorStop(0.4, "rgba(37,99,235,0.05)");
+        atm.addColorStop(1, "rgba(37,99,235,0)");
+      } else {
+        atm.addColorStop(0, "rgba(90,169,255,0.35)");
+        atm.addColorStop(0.35, "rgba(90,169,255,0.12)");
+        atm.addColorStop(1, "rgba(90,169,255,0)");
+      }
       g.fillStyle = atm;
       g.beginPath();
       g.arc(cx, cy, R * 1.18, 0, TAU);
       g.fill();
       const body = g.createRadialGradient(cx - R * 0.45, cy - R * 0.55, R * 0.1, cx, cy, R);
-      body.addColorStop(0, "#1b2f55");
-      body.addColorStop(0.55, "#0c1426");
-      body.addColorStop(1, "#05080f");
+      if (light) {
+        body.addColorStop(0, "rgba(218,225,236,0.72)");
+        body.addColorStop(0.55, "rgba(196,204,218,0.48)");
+        body.addColorStop(1, "rgba(176,184,198,0.28)");
+      } else {
+        body.addColorStop(0, "#1b2f55");
+        body.addColorStop(0.55, "#0c1426");
+        body.addColorStop(1, "#05080f");
+      }
       g.fillStyle = body;
       g.beginPath();
       g.arc(cx, cy, R, 0, TAU);
@@ -278,7 +296,7 @@ export default function SpaceBackdrop({ variant = "journal", scrollRef, theme = 
       g.beginPath();
       g.arc(cx, cy, R, 0, TAU);
       g.clip();
-      g.strokeStyle = "rgba(140,190,255,0.06)";
+      g.strokeStyle = light ? "rgba(30,52,96,0.08)" : "rgba(140,190,255,0.06)";
       g.lineWidth = 1;
       for (let k = -4; k <= 4; k++) {
         g.beginPath();
@@ -287,7 +305,7 @@ export default function SpaceBackdrop({ variant = "journal", scrollRef, theme = 
       }
       g.restore();
       // rim light
-      g.strokeStyle = "rgba(150,205,255,0.55)";
+      g.strokeStyle = light ? "rgba(37,99,235,0.28)" : "rgba(150,205,255,0.55)";
       g.lineWidth = 1.4;
       g.beginPath();
       g.arc(cx, cy, R, Math.PI * 1.05, Math.PI * 1.62);
@@ -295,7 +313,7 @@ export default function SpaceBackdrop({ variant = "journal", scrollRef, theme = 
       /* front halves + satellites with trails */
       g.setLineDash([2, 7]);
       orbits.forEach((o) => {
-        g.strokeStyle = `rgba(${o.col},0.22)`;
+        g.strokeStyle = `rgba(${o.col},${light ? 0.2 : 0.22})`;
         ell(o, 0, Math.PI);
       });
       g.setLineDash([]);
@@ -314,20 +332,20 @@ export default function SpaceBackdrop({ variant = "journal", scrollRef, theme = 
           // trail
           for (let t = 1; t <= 14; t++) {
             const [x, y] = pt(o, a - Math.sign(o.sp) * t * 0.012);
-            g.fillStyle = `rgba(${o.col},${(0.4 * (1 - t / 14)).toFixed(3)})`;
+            g.fillStyle = `rgba(${o.col},${((light ? 0.28 : 0.4) * (1 - t / 14)).toFixed(3)})`;
             g.beginPath();
             g.arc(x, y, 1.6 * (1 - t / 18), 0, TAU);
             g.fill();
           }
           const [x, y] = pt(o, a);
           const grd = g.createRadialGradient(x, y, 0, x, y, 9);
-          grd.addColorStop(0, `rgba(${o.col},0.8)`);
+          grd.addColorStop(0, `rgba(${o.col},${light ? 0.55 : 0.8})`);
           grd.addColorStop(1, `rgba(${o.col},0)`);
           g.fillStyle = grd;
           g.beginPath();
           g.arc(x, y, 9, 0, TAU);
           g.fill();
-          g.fillStyle = "#fff";
+          g.fillStyle = light ? "#1e3a8a" : "#fff";
           g.beginPath();
           g.arc(x, y, 1.9, 0, TAU);
           g.fill();
@@ -347,7 +365,7 @@ export default function SpaceBackdrop({ variant = "journal", scrollRef, theme = 
       const dy = (ptr.sy - 0.5) * -18;
       const sy = scrollY();
       if (nebula) {
-        g.globalAlpha = light ? 0.55 : 1;
+        g.globalAlpha = light ? 0.45 : 1;
         const drift = reduced ? 0 : Math.sin(clock * 0.05) * 30;
         g.drawImage(nebula, -40 + dx * 0.3 + drift, -40 + dy * 0.3 - sy * 0.03, S.w + 80, S.h + 80);
         g.globalAlpha = 1;
@@ -355,7 +373,7 @@ export default function SpaceBackdrop({ variant = "journal", scrollRef, theme = 
       drawStars(light, sy, dx, dy);
       if (variant === "journal" && !light) drawShooters(dt);
       if (variant === "crew") drawConstellation(light, dt, sy);
-      if (variant === "orbit") drawOrbit(sy, dx, dy);
+      if (variant === "orbit") drawOrbit(light, sy, dx, dy);
     };
 
     const tick = (now) => {

@@ -28,6 +28,7 @@ export interface StackSliderProps {
    */
   tailVh?: number;
   keyFactsRef?: React.RefObject<HTMLElement | null>;
+  theme?: 'light' | 'dark';
 }
 
 interface RollingCardProps {
@@ -68,8 +69,10 @@ function RollingCard({
     if (prefersReducedMotion || (typeof window !== 'undefined' && window.innerWidth < 768)) {
       return 'none';
     }
-    const blurPx = Math.min(Math.abs(o) * 6.5, 14);
-    return blurPx < 0.08 ? 'none' : `blur(${blurPx.toFixed(2)}px)`;
+    const abs = Math.abs(o);
+    if (abs < 0.04) return 'none';
+    const blurPx = Math.min(abs * 4, 8);
+    return `blur(${blurPx.toFixed(2)}px)`;
   });
   const zIndex = useTransform(offset, (o) => 50 - Math.round(Math.abs(o) * 10));
 
@@ -169,9 +172,20 @@ function RollingCard({
 interface LetterSwapTitleProps {
   text: string;
   prefersReducedMotion: boolean;
+  isDark: boolean;
 }
 
-function LetterSwapTitle({ text, prefersReducedMotion }: LetterSwapTitleProps) {
+const LIGHT_WASHES = ['#E9E6DF', '#ECE6DC', '#E6E4DD', '#E3E7DF', '#E5E6E9'];
+const LIGHT_GLOWS = [
+  'rgba(196, 134, 24, 0.14)',
+  'rgba(196, 92, 58, 0.13)',
+  'rgba(92, 104, 122, 0.11)',
+  'rgba(16, 148, 108, 0.13)',
+  'rgba(37, 99, 235, 0.12)',
+];
+const LIGHT_ACCENTS = ['#8A4F04', '#A84022', '#2D3748', '#046C4E', '#1D4ED8'];
+
+function LetterSwapTitle({ text, prefersReducedMotion, isDark }: LetterSwapTitleProps) {
   // Real client names are longer than the old one-word titles: wrap only between
   // words (never mid-word) and step the size down for long single words.
   const words = text.split(' ');
@@ -180,10 +194,11 @@ function LetterSwapTitle({ text, prefersReducedMotion }: LetterSwapTitleProps) {
     longest > 10
       ? 'text-[2.6rem] sm:text-5xl xl:text-[4.4rem]'
       : 'text-5xl sm:text-6xl xl:text-[5.5rem]';
+  const inkClass = isDark ? 'text-white' : 'text-[#0F131A]';
 
   if (prefersReducedMotion) {
     return (
-      <h2 className={`font-display ${size} font-semibold tracking-tight leading-[0.95] text-white text-balance`}>
+      <h2 className={`font-display ${size} font-semibold tracking-tight leading-[0.95] ${inkClass} text-balance`}>
         {text}
       </h2>
     );
@@ -193,7 +208,7 @@ function LetterSwapTitle({ text, prefersReducedMotion }: LetterSwapTitleProps) {
   return (
     <div className="relative min-h-[1.05em]">
       <h2
-        className={`font-display ${size} font-semibold tracking-tight leading-[0.95] text-white`}
+        className={`font-display ${size} font-semibold tracking-tight leading-[0.95] ${inkClass}`}
         aria-label={text}
       >
         <AnimatePresence mode="popLayout" initial={false}>
@@ -240,7 +255,9 @@ export function StackSlider({
   sectionId = 'c-stack-slider',
   tailVh = 0,
   keyFactsRef,
+  theme = 'light',
 }: StackSliderProps) {
+  const isDark = theme === 'dark';
   const containerRef = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = Boolean(useReducedMotion());
   const [activeIndex, setActiveIndex] = useState(0);
@@ -251,22 +268,25 @@ export function StackSlider({
   });
 
   // Fraction of the section's scroll travel used by the slides; the rest is the pinned tail.
-  const slideVh = Math.max(items.length, 1) * 90;
+  const slideVh = Math.max(items.length, 1) * 65;
   const slideShare = tailVh > 0 ? (slideVh - 100) / (slideVh + tailVh - 100) : 1;
 
-  const rawIndex = useTransform(
-    scrollYProgress,
-    [0, slideShare],
-    [0, Math.max(0, items.length - 1)]
-  );
-
-  const smoothIndex = useSpring(rawIndex, {
-    stiffness: prefersReducedMotion ? 500 : 190,
-    damping: prefersReducedMotion ? 50 : 28,
-    mass: 0.55,
+  // Quantize scroll progress to exact slide indices so each scroll gesture cleanly advances
+  // and locks onto the next project card instead of stopping blurry half-way between two cards.
+  const steppedIndex = useTransform(scrollYProgress, (p) => {
+    const maxIdx = Math.max(0, items.length - 1);
+    if (maxIdx === 0 || slideShare <= 0) return 0;
+    const u = Math.max(0, Math.min(1, p / slideShare)) * maxIdx;
+    return Math.round(u);
   });
 
-  useMotionValueEvent(smoothIndex, 'change', (latest) => {
+  const smoothIndex = useSpring(steppedIndex, {
+    stiffness: prefersReducedMotion ? 500 : 250,
+    damping: prefersReducedMotion ? 50 : 28,
+    mass: 0.5,
+  });
+
+  useMotionValueEvent(steppedIndex, 'change', (latest) => {
     const clamped = Math.max(0, Math.min(items.length - 1, Math.round(latest)));
     if (clamped !== activeIndex) {
       setActiveIndex(clamped);
@@ -292,13 +312,17 @@ export function StackSlider({
   const imageFilter = useTransform(imageP, (v) => (v >= 0.995 || !blurMax ? 'none' : `blur(${((1 - v) * blurMax).toFixed(2)}px)`));
   const edgeOpacity = useTransform(textP, [0, 1], [0, 1]);
 
-  // Dynamic frame background color wash interpolated smoothly across slides
+  // Dynamic frame background color wash interpolated smoothly across slides (both dark and light palettes)
   const inputRange = items.map((_, i) => i);
   const washColors = items.map((item) => item.washColor);
   const glowColors = items.map((item) => item.glowColor);
+  const lightWashColors = items.map((_, i) => LIGHT_WASHES[i % LIGHT_WASHES.length]);
+  const lightGlowColors = items.map((_, i) => LIGHT_GLOWS[i % LIGHT_GLOWS.length]);
 
-  const washBg = useTransform(smoothIndex, inputRange, washColors);
-  const ambientGlow = useTransform(smoothIndex, inputRange, glowColors);
+  const darkWashBg = useTransform(smoothIndex, inputRange, washColors);
+  const darkAmbientGlow = useTransform(smoothIndex, inputRange, glowColors);
+  const lightWashBg = useTransform(smoothIndex, inputRange, lightWashColors);
+  const lightAmbientGlow = useTransform(smoothIndex, inputRange, lightGlowColors);
 
   const { scrollYProgress: kfScroll } = useScroll({
     target: keyFactsRef ?? containerRef,
@@ -306,14 +330,36 @@ export function StackSlider({
   });
   const blueOpacity = useTransform(kfScroll, [0.5, 1], [keyFactsRef ? 0 : 1, 1]);
 
-  // Services panel slides up OVER the pinned slider: dim the slider as it gets covered
+  // Services panel slides up OVER the pinned slider: recede, scale down, round corners, blur & dim
+  // (mirrors ScrollOverHero between ClientShowcase and Testimonials)
   const totalVh = slideVh + tailVh;
   const coverFrom = Math.max(0, (totalVh - 200) / Math.max(1, totalVh - 100));
-  const coverDim = useTransform(scrollYProgress, [coverFrom, 1], [0, tailVh > 60 ? 0.7 : 0]);
+  const coverProgress = useTransform(
+    scrollYProgress,
+    [coverFrom, 1],
+    [0, tailVh > 60 ? 1 : 0]
+  );
+  const stageScale = useTransform(coverProgress, [0, 1], prefersReducedMotion ? [1, 1] : [1, 0.9]);
+  const stageRadius = useTransform(coverProgress, [0, 1], prefersReducedMotion ? [0, 0] : [0, 28]);
+  const stageFilter = useTransform(coverProgress, (v) => {
+    if (prefersReducedMotion || v < 0.004) return 'none';
+    const maxBlur = typeof window !== 'undefined' && window.innerWidth < 768 ? 5 : 9;
+    return `blur(${(v * maxBlur).toFixed(2)}px)`;
+  });
+  const coverDim = useTransform(coverProgress, [0, 1], [0, 0.55]);
 
-  const glowGradient = useMotionTemplate`radial-gradient(62% 58% at 68% 50%, ${ambientGlow}, transparent 74%)`;
-  const topFadeMask = useMotionTemplate`linear-gradient(to bottom, ${washBg} 0%, transparent 100%)`;
-  const bottomFadeMask = useMotionTemplate`linear-gradient(to top, ${washBg} 0%, transparent 100%)`;
+  const darkGlowGradient = useMotionTemplate`radial-gradient(62% 58% at 68% 50%, ${darkAmbientGlow}, transparent 74%)`;
+  const darkTopFadeMask = useMotionTemplate`linear-gradient(to bottom, ${darkWashBg} 0%, transparent 100%)`;
+  const darkBottomFadeMask = useMotionTemplate`linear-gradient(to top, ${darkWashBg} 0%, transparent 100%)`;
+
+  const lightGlowGradient = useMotionTemplate`radial-gradient(62% 58% at 68% 50%, ${lightAmbientGlow}, transparent 74%)`;
+  const lightTopFadeMask = useMotionTemplate`linear-gradient(to bottom, ${lightWashBg} 0%, transparent 100%)`;
+  const lightBottomFadeMask = useMotionTemplate`linear-gradient(to top, ${lightWashBg} 0%, transparent 100%)`;
+
+  const washBg = isDark ? darkWashBg : lightWashBg;
+  const glowGradient = isDark ? darkGlowGradient : lightGlowGradient;
+  const topFadeMask = isDark ? darkTopFadeMask : lightTopFadeMask;
+  const bottomFadeMask = isDark ? darkBottomFadeMask : lightBottomFadeMask;
 
   const scrollToSlide = useCallback(
     (targetIdx: number) => {
@@ -369,14 +415,19 @@ export function StackSlider({
       className="relative w-full"
     >
       <div
-        style={{ backgroundColor: '#FFFFFF' }}
-        className="sticky top-0 h-screen w-full overflow-hidden flex flex-col justify-between"
+        style={{ backgroundColor: isDark ? '#000000' : '#d2cdc2' }}
+        className="sticky top-0 h-screen w-full overflow-hidden"
       >
         <motion.div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0"
-          style={{ backgroundColor: '#05080d', opacity: coverDim, zIndex: 60 }}
-        />
+          style={{
+            backgroundColor: isDark ? '#0B0E14' : '#E9E6DF',
+            scale: stageScale,
+            filter: stageFilter,
+            borderRadius: stageRadius,
+            transformOrigin: '50% 0%',
+          }}
+          className="relative h-full w-full overflow-hidden flex flex-col justify-between will-change-transform"
+        >
         {/* Slide wash background: synchronized with Key Facts' 50%→100% transition */}
         <motion.div
           aria-hidden="true"
@@ -396,10 +447,10 @@ export function StackSlider({
           style={{ opacity: edgeOpacity, x: textX, filter: textFilter }}
           className="relative z-20 mx-auto w-full max-w-[1360px] px-4 sm:px-6 md:px-12 pt-[72px] sm:pt-24 flex items-center justify-between gap-4"
         >
-          <div className="flex items-center gap-3 text-xs font-mono tabular-nums tracking-wide text-white/65">
+          <div className={`flex items-center gap-3 text-xs font-mono tabular-nums tracking-wide ${isDark ? 'text-white/65' : 'text-black/60'}`}>
             <span>Selected Works</span>
             <span aria-hidden="true">/</span>
-            <span className="text-white">
+            <span className={isDark ? 'text-white' : 'text-[#0F131A]'}>
               {currentItem.indexLabel} — {String(items.length).padStart(2, '0')}
             </span>
           </div>
@@ -425,7 +476,7 @@ export function StackSlider({
             style={{ x: textX, opacity: textP, filter: textFilter }}
             className="order-2 lg:order-1 lg:col-span-5 flex flex-col justify-center will-change-transform"
           >
-            <div className="flex items-center gap-2.5 text-xs sm:text-sm text-white/65 mb-3">
+            <div className={`flex items-center gap-2.5 text-xs sm:text-sm mb-3 ${isDark ? 'text-white/65' : 'text-black/60'}`}>
               <span>{currentItem.client}</span>
               <span aria-hidden="true">·</span>
               <span className="font-mono tabular-nums">{currentItem.year}</span>
@@ -434,6 +485,7 @@ export function StackSlider({
             <LetterSwapTitle
               text={currentItem.word}
               prefersReducedMotion={prefersReducedMotion}
+              isDark={isDark}
             />
 
             <AnimatePresence mode="wait">
@@ -445,16 +497,20 @@ export function StackSlider({
                 transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
                 className="mt-2.5 sm:mt-5 max-w-md"
               >
-                <p className="text-xs sm:text-sm md:text-base leading-relaxed text-white/80">
+                <p className={`text-xs sm:text-sm md:text-base leading-relaxed ${isDark ? 'text-white/80' : 'text-[#272D38]'}`}>
                   {currentItem.description}
                 </p>
 
-                <div className="mt-4 pt-4 border-t border-white/12 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/65">
+                <div className={`mt-4 pt-4 border-t flex flex-wrap items-center gap-x-3 gap-y-1 text-xs ${isDark ? 'border-white/12 text-white/65' : 'border-black/15 text-black/65'}`}>
                   <span>{currentItem.deliverable}</span>
                   <span aria-hidden="true">·</span>
                   <span
                     className="font-medium"
-                    style={{ color: currentItem.accentColor }}
+                    style={{
+                      color: isDark
+                        ? currentItem.accentColor
+                        : LIGHT_ACCENTS[activeIndex % LIGHT_ACCENTS.length],
+                    }}
                   >
                     {currentItem.outcome}
                   </span>
@@ -467,7 +523,11 @@ export function StackSlider({
               <button
                 type="button"
                 onClick={() => onSelectSlide?.(currentItem)}
-                className="ct-btn ct-btn-light gap-2 px-3.5 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm shrink-0"
+                className={
+                  isDark
+                    ? 'ct-btn ct-btn-light gap-2 px-3.5 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm shrink-0'
+                    : 'inline-flex items-center justify-center rounded-lg bg-[#11151d] text-white hover:bg-[#1f2635] transition-colors cursor-pointer gap-2 px-3.5 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm shrink-0'
+                }
               >
                 <span>Explore Case Study</span>
                 <ArrowUpRight className="w-4 h-4" />
@@ -477,7 +537,11 @@ export function StackSlider({
                 <button
                   type="button"
                   onClick={onExploreAll}
-                  className="ct-btn ct-btn-ghost gap-2 px-3.5 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm shrink-0"
+                  className={
+                    isDark
+                      ? 'ct-btn ct-btn-ghost gap-2 px-3.5 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm shrink-0'
+                      : 'inline-flex items-center justify-center rounded-lg border border-black/25 bg-black/[0.03] text-[#11151d] hover:bg-black/[0.08] transition-colors cursor-pointer gap-2 px-3.5 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm shrink-0'
+                  }
                 >
                   <span>Explore all work</span>
                   <ArrowRight className="w-4 h-4" />
@@ -490,7 +554,11 @@ export function StackSlider({
                   onClick={() => scrollToSlide(activeIndex - 1)}
                   disabled={activeIndex === 0}
                   aria-label="Previous project slide"
-                  className="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-white/15 text-white/85 hover:text-white hover:border-white/35 disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                  className={`w-10 h-10 inline-flex items-center justify-center rounded-lg border disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 ${
+                    isDark
+                      ? 'border-white/15 text-white/85 hover:text-white hover:border-white/35 focus-visible:ring-white/70'
+                      : 'border-black/20 text-[#11151d] hover:border-black/50 hover:bg-black/[0.05] focus-visible:ring-black/50'
+                  }`}
                 >
                   <ArrowUp className="w-4 h-4" />
                 </button>
@@ -499,7 +567,11 @@ export function StackSlider({
                   onClick={() => scrollToSlide(activeIndex + 1)}
                   disabled={activeIndex === items.length - 1}
                   aria-label="Next project slide"
-                  className="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-white/15 text-white/85 hover:text-white hover:border-white/35 disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                  className={`w-10 h-10 inline-flex items-center justify-center rounded-lg border disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 ${
+                    isDark
+                      ? 'border-white/15 text-white/85 hover:text-white hover:border-white/35 focus-visible:ring-white/70'
+                      : 'border-black/20 text-[#11151d] hover:border-black/50 hover:bg-black/[0.05] focus-visible:ring-black/50'
+                  }`}
                 >
                   <ArrowDown className="w-4 h-4" />
                 </button>
@@ -559,8 +631,12 @@ export function StackSlider({
                   <span
                     className={`font-mono text-xs tabular-nums transition-colors duration-200 ${
                       isCurrent
-                        ? 'text-white font-medium'
-                        : 'text-white/40 group-hover:text-white/75'
+                        ? isDark
+                          ? 'text-white font-medium'
+                          : 'text-[#0F131A] font-medium'
+                        : isDark
+                          ? 'text-white/40 group-hover:text-white/75'
+                          : 'text-black/40 group-hover:text-black/75'
                     }`}
                   >
                     {item.indexLabel}
@@ -568,8 +644,12 @@ export function StackSlider({
                   <span
                     className={`block h-px transition-all duration-300 ${
                       isCurrent
-                        ? 'w-7 bg-white'
-                        : 'w-3 bg-white/30 group-hover:w-5 group-hover:bg-white/60'
+                        ? isDark
+                          ? 'w-7 bg-white'
+                          : 'w-7 bg-[#0F131A]'
+                        : isDark
+                          ? 'w-3 bg-white/30 group-hover:w-5 group-hover:bg-white/60'
+                          : 'w-3 bg-black/25 group-hover:w-5 group-hover:bg-black/60'
                     }`}
                   />
                 </button>
@@ -583,7 +663,7 @@ export function StackSlider({
           style={{ opacity: edgeOpacity }}
           className="relative z-20 mx-auto w-full max-w-[1360px] px-6 md:px-12 pb-6 flex items-center justify-between gap-4"
         >
-          <p className="text-xs text-white/50">
+          <p className={`text-xs ${isDark ? 'text-white/50' : 'text-black/55'}`}>
             Scroll vertically or use arrow keys to roll through the stack
           </p>
 
@@ -598,13 +678,26 @@ export function StackSlider({
               >
                 <span
                   className={`block h-1.5 rounded-full transition-all duration-300 ${
-                    idx === activeIndex ? 'w-6 bg-white' : 'w-2 bg-white/30'
+                    idx === activeIndex
+                      ? isDark
+                        ? 'w-6 bg-white'
+                        : 'w-6 bg-[#0F131A]'
+                      : isDark
+                        ? 'w-2 bg-white/30'
+                        : 'w-2 bg-black/25'
                   }`}
                 />
               </button>
             ))}
           </div>
         </motion.div>
+        </motion.div>
+        {/* Recessed veil over the shrinking, blurring stage as Services rises */}
+        <motion.div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-[60] bg-black"
+          style={{ opacity: coverDim }}
+        />
       </div>
     </section>
   );

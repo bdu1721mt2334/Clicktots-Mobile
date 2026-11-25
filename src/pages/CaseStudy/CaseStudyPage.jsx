@@ -160,13 +160,7 @@ export default function CaseStudyPage({ scrollRef, skipIntro = false, leaving = 
       {/* one calm background for the whole page (hero and work flow into each other – no seam) */}
       <div className="cs-bg" aria-hidden="true" />
       <div className="cs-container">
-        <header className="header">
-          <div className="wrapper">
-            <div className="logo" data-fade-in="down">
-              <img src="/assets/clicktots-logo.webp" alt="Clicktots Technologies" />
-            </div>
-          </div>
-        </header>
+        <header className="header" aria-hidden="true" />
 
         <div className="preloader-progress-bar" data-text-fade="off">
           <div className="preloader-bg" />

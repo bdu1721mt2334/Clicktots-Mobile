@@ -12,7 +12,7 @@ const AllProjects = lazy(() => import("@/pages/Projects/AllProjects"));
 
 const TAIL_VH = 130;
 
-export default function Projects({ keyFactsRef }) {
+export default function Projects({ keyFactsRef, theme = "light" }) {
   const sectionRef = useRef(null);
   const [selected, setSelected] = useState(null);
   const pathname = usePathname();
@@ -27,11 +27,12 @@ export default function Projects({ keyFactsRef }) {
     <section
       id="projects"
       ref={sectionRef}
-      className="stack-slider-scope relative z-30 text-[#F4F3EF] antialiased"
+      className={`stack-slider-scope relative z-30 antialiased ${theme === "dark" ? "text-[#F4F3EF]" : "text-[#0F131A]"}`}
     >
       <StackSlider
         items={PORTFOLIO_SLIDES}
         keyFactsRef={keyFactsRef}
+        theme={theme}
         onSelectSlide={(slide) => setSelected(slide)}
         onExploreAll={openAll}
         tailVh={TAIL_VH}

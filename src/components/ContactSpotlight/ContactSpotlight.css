@@ -70,13 +70,17 @@
 
 /* phones: shorter section, so the CLICK → button reveal does not leave a long empty stretch */
 @media (max-width: 767px) {
-  .contact-spotlight .spotlight { height: 52svh; min-height: 360px; }
+  .contact-spotlight .spotlight { height: 54svh; min-height: 380px; }
 }
-@media (min-width: 768px) and (max-width: 999px) {
-  .contact-spotlight .spotlight { height: 62svh; }
+/* tablets (768–1023px): enough vertical room so CONTACT US lands cleanly below CLICK */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .contact-spotlight .spotlight { height: clamp(500px, 76svh, 680px); }
 }
-@media (max-width: 999px) {
+@media (min-width: 1024px) {
+  .contact-spotlight .spotlight { min-height: 560px; }
+}
+@media (max-width: 1023px) {
   .contact-spotlight .spotlight-header {
-    padding-top: 2rem;
+    padding-top: 1.75rem;
   }
 }

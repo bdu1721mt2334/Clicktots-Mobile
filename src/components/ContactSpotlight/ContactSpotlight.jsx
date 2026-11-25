@@ -126,18 +126,36 @@ export default function ContactSpotlight({
     let targetScale = 1;
     let shiftStep = 0;
     const measure = () => {
-      const isMobile = window.innerWidth < 1000;
+      const w = window.innerWidth;
+      const isPhone = w < 768;
+      const isTablet = w >= 768 && w < 1024;
       const cs = getComputedStyle(headers[0]);
       const svgW = headers[0].clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
       const pxPerUnit = svgW / viewBoxWidth;
       const pad = parseFloat(cs.paddingTop) || 24;
       const headerHeight = headers[0].offsetHeight; // layout size: not affected by the scale
       const frontScale = 1 - (headers.length - 1) * 0.075;
-      shiftStep = isMobile ? 25 : Math.max(0, window.innerWidth * 0.0244 - 0.075 * headerHeight);
+      shiftStep = isPhone
+        ? 22
+        : isTablet
+          ? 18
+          : Math.max(0, w * 0.0244 - 0.075 * headerHeight);
       const frontShift = shiftStep * (headers.length - 1);
-      const targetButtonPx = isMobile ? window.innerWidth * 0.34 : window.innerWidth * 0.109;
+      const targetButtonPx = isPhone
+        ? Math.min(w * 0.42, 180)
+        : isTablet
+          ? Math.min(w * 0.27, 232)
+          : Math.max(150, w * 0.115);
       targetScale = targetButtonPx / (b.height * pxPerUnit * frontScale);
-      const targetCenterPx = section.clientHeight * (window.innerWidth < 768 ? 0.82 : 0.72); // phones: lands lower in the shorter section
+      const btnHeightPx = targetButtonPx / 4.3;
+      const frontBottomPx = headerHeight + frontShift;
+      const minCenterPx = frontBottomPx + btnHeightPx * 0.65 + 14;
+      const maxCenterPx = section.clientHeight - btnHeightPx * 0.65 - 16;
+      const idealCenterPx = section.clientHeight * (isPhone ? 0.82 : isTablet ? 0.84 : 0.74);
+      const targetCenterPx =
+        minCenterPx <= maxCenterPx
+          ? clamp(idealCenterPx, minCenterPx, maxCenterPx)
+          : Math.min(maxCenterPx, (minCenterPx + maxCenterPx) * 0.5);
       const startCenterPx = pad + cy * pxPerUnit;
       const needed = headerHeight - (headerHeight + frontShift - targetCenterPx) / frontScale;
       slideDistance = (needed - startCenterPx) / pxPerUnit;
@@ -245,22 +263,20 @@ export default function ContactSpotlight({
                 aria-label={isFront ? "Click" : undefined}
               >
                 {letters.paths.map((d, i) =>
-                  isFront && i === I_INDEX ? (
-                    <g
-                      key={i}
-                      ref={iGroupRef}
-                      className="i-button"
-                      role="link"
-                      aria-label={labelText}
-                      tabIndex={-1}
-                    >
-                      <path ref={iPathRef} d={d} />
-                      <rect ref={rectRef} />
-                      <text ref={labelRef} className="i-link-text" />
-                    </g>
-                  ) : (
-                    <path key={i} d={d} />
-                  )
+                  isFront && i === I_INDEX ? null : <path key={i} d={d} />
+                )}
+                {isFront && (
+                  <g
+                    ref={iGroupRef}
+                    className="i-button"
+                    role="link"
+                    aria-label={labelText}
+                    tabIndex={-1}
+                  >
+                    <path ref={iPathRef} d={letters.paths[I_INDEX]} />
+                    <rect ref={rectRef} />
+                    <text ref={labelRef} className="i-link-text" />
+                  </g>
                 )}
               </svg>
             </div>

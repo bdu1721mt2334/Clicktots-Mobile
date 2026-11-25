@@ -7,6 +7,7 @@ import BackButton from "@/components/BackButton/BackButton";
 import { setScrollLocked } from "@/lib/scroll";
 import { getOrigin } from "@/lib/router";
 import { useOverlayScroll } from "@/hooks/useOverlayScroll";
+import useSiteTheme from "@/hooks/useSiteTheme";
 import ServicePage from "./ServicePage";
 
 /* The service page opens exactly like "About Clicktots":
@@ -18,7 +19,8 @@ import ServicePage from "./ServicePage";
    Timings / easing are the same numbers as pages/About/AboutClicktots.jsx. */
 
 const EASE = [0.22, 1, 0.36, 1];
-const BG_END = "#f2f2f0";
+const BG_END_LIGHT = "#E9E6DF";
+const BG_END_DARK = "#060912";
 
 function insetFromRect(r) {
   const vw = window.innerWidth;
@@ -31,6 +33,9 @@ export default function ServiceOverlay({ service, onClose, onNavigate }) {
   const open = !!service;
   const [settled, setSettled] = useState(false);
   const scrollRef = useRef(null);
+  const [theme] = useSiteTheme();
+  const isDark = theme === "dark";
+  const bgEnd = isDark ? BG_END_DARK : BG_END_LIGHT;
 
   // remember where the click came from the moment the page opens
   const originRef = useRef(null);
@@ -90,7 +95,7 @@ export default function ServiceOverlay({ service, onClose, onNavigate }) {
           role="dialog"
           aria-modal="true"
           aria-label={`${current.name} – Clicktots`}
-          className="fixed inset-0 text-[#1a1d1f]"
+          className={`fixed inset-0 transition-colors duration-300 ${isDark ? "text-[#f5f7fa]" : "text-[#121110]"}`}
           style={{
             zIndex: 9000,
             willChange: settled ? "auto" : "clip-path",
@@ -99,7 +104,7 @@ export default function ServiceOverlay({ service, onClose, onNavigate }) {
           initial={{ clipPath: from, backgroundColor: color }}
           animate={{
             clipPath: to,
-            backgroundColor: BG_END,
+            backgroundColor: bgEnd,
             transition: { duration: 0.55, ease: EASE },
           }}
           onAnimationComplete={(def) => {
@@ -149,7 +154,7 @@ export default function ServiceOverlay({ service, onClose, onNavigate }) {
             animate={{ opacity: 1, transition: { delay: 0.45, duration: 0.3 } }}
             exit={{ opacity: 0, transition: { duration: 0.15 } }}
           >
-            <BackButton tone="light" label="Back to home" onClick={onClose} />
+            <BackButton tone={isDark ? "dark" : "light"} label="Back to home" onClick={onClose} />
           </motion.div>
         </motion.div>
       )}

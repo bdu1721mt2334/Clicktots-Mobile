@@ -741,6 +741,13 @@ export default function RocketStory({ service, story }) {
       if (barRef.current) barRef.current.style.transform = `scaleX(${range(s, INTRO * 0.6, T.flag1).toFixed(4)})`;
       if (fadeRef.current) fadeRef.current.style.opacity = String(inOut(range(s, T.total - 0.55, T.total - 0.12)));
 
+      const navDark = s > 0.35 && s < T.total - 0.28;
+      if ((document.documentElement.dataset.navDarkOverride === "1") !== navDark) {
+        if (navDark) document.documentElement.dataset.navDarkOverride = "1";
+        else delete document.documentElement.dataset.navDarkOverride;
+        window.dispatchEvent(new Event("clicktots:navsurface"));
+      }
+
       pushView({ on, next: Math.min(next, count - 1), scene, avoided });
     };
 
@@ -788,6 +795,10 @@ export default function RocketStory({ service, story }) {
       clearTimeout(idle3d);
       (window.cancelIdleCallback || clearTimeout)(idleId);
       deactivate();
+      if (document.documentElement.dataset.navDarkOverride) {
+        delete document.documentElement.dataset.navDarkOverride;
+        window.dispatchEvent(new Event("clicktots:navsurface"));
+      }
       G.s3?.dispose();
       atmo?.dispose();
     };
@@ -840,7 +851,7 @@ export default function RocketStory({ service, story }) {
       ref={rootRef}
       className={`rk scene-${view.scene} ${has3d ? "has-3d" : ""} ${no3d ? "no-3d" : ""}`}
       data-text-fade="off"
-      style={{ "--c": service.color, height: `calc(${100 + T.total * 100}svh)`, marginTop: "-100svh", marginBottom: "-30svh" }}
+      style={{ "--c": service.color, height: `calc(${100 + T.total * 100}svh)`, marginTop: "-100svh", marginBottom: 0 }}
       aria-labelledby={`rk-title-${service.slug}`}
     >
       {/* ═══ BACKDROP (under the pinned hero): space, dusk, sky, ground, clouds, Earth + moonscape ═══ */}

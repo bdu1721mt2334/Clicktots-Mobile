@@ -87,7 +87,9 @@ export default function ClientShowcase() {
     let running = false;
     let raf = 0;
     let last = 0;
+    let idleFrames = 0;
     let drag = null; // { i, id, ox, oy, tx, ty }
+    const finePointer = window.matchMedia("(pointer: fine)").matches;
 
     const radiusFor = (w) => Math.max(40, Math.min(74, w / 15.5));
 
@@ -123,6 +125,7 @@ export default function ClientShowcase() {
     /* ---------- the rain ---------- */
     const startRain = (instant) => {
       rained = true;
+      idleFrames = 0;
       balls.forEach((b, i) => {
         const slot = ((i * 0.61803) % 1) * (W - 2 * R) + R; // spread across the width
         b.x = slot + (Math.random() - 0.5) * R * 0.5;
@@ -188,7 +191,8 @@ export default function ClientShowcase() {
         }
       }
 
-      for (let it = 0; it < ITER; it++) {
+      const iter = W < 768 ? 2 : ITER;
+      for (let it = 0; it < iter; it++) {
         // balls vs balls
         for (let i = 0; i < N; i++) {
           const a = balls[i];
@@ -247,17 +251,17 @@ export default function ClientShowcase() {
       }
     }
 
-    /* ---------- title letters react to the cursor, like the background dots ---------- */
-    const chars = [...arena.querySelectorAll(".cs-ch")].map((el) => ({ el, x: 0, y: 0 }));
+    /* ---------- title letters react to the cursor (fine-pointer desktops only) ---------- */
+    const chars = finePointer ? [...arena.querySelectorAll(".cs-ch")].map((el) => ({ el, x: 0, y: 0 })) : [];
     const mouse = { x: -9999, y: -9999 };
     const onTitleMove = (e) => {
       mouse.x = e.clientX;
       mouse.y = e.clientY;
     };
-    window.addEventListener("pointermove", onTitleMove);
+    if (finePointer) window.addEventListener("pointermove", onTitleMove, { passive: true });
 
     const titleStep = () => {
-      if (!section.classList.contains("cs-ready")) return;
+      if (!finePointer || !section.classList.contains("cs-ready")) return;
       const RANGE = 150;
       // read every letter first, then write: interleaving them forced a style recalc per letter
       const rects = chars.map((c) => c.el.getBoundingClientRect());
@@ -281,12 +285,37 @@ export default function ClientShowcase() {
       if (!running) return;
       const dtFrame = Math.min(0.033, (t - last) / 1000 || 0.016);
       last = t;
-      for (let s = 0; s < SUB; s++) step(dtFrame / SUB);
+      const sub = W < 768 ? 2 : SUB;
+      for (let s = 0; s < sub; s++) step(dtFrame / sub);
       titleStep();
       placeAll();
+
+      // Auto-sleep physics loop on mobile/touch once all balls have settled on the floor
+      if (!finePointer && rained && !drag) {
+        let allLive = true;
+        let energy = 0;
+        for (let i = 0; i < N; i++) {
+          const b = balls[i];
+          if (!b.live) {
+            allLive = false;
+            break;
+          }
+          energy += Math.abs(b.vx) + Math.abs(b.vy);
+        }
+        if (allLive && energy < 18) {
+          idleFrames += 1;
+          if (idleFrames > 28) {
+            stop();
+            return;
+          }
+        } else {
+          idleFrames = 0;
+        }
+      }
       raf = requestAnimationFrame(frame);
     };
     const run = () => {
+      idleFrames = 0;
       if (running) return;
       running = true;
       last = performance.now();
@@ -399,7 +428,7 @@ export default function ClientShowcase() {
       clearTimeout(readyTimer);
       arena.removeEventListener("pointerdown", onDown);
       window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointermove", onTitleMove);
+      if (finePointer) window.removeEventListener("pointermove", onTitleMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
     };

@@ -166,11 +166,13 @@ export const SPACE_CSS = `
   background:radial-gradient(circle at 32% 28%,#a98467 0,#6a4c3a 38%,#2f2018 78%,#1a110c 100%);
   box-shadow:0 0 calc(var(--s)*.6) rgba(255,120,40,.85),inset -3px -3px 6px rgba(0,0,0,.55),inset 2px 2px 4px rgba(255,190,120,.35)}
 .ct-rock::after{content:"";position:absolute;left:24%;top:30%;width:24%;height:20%;border-radius:50%;background:rgba(20,10,6,.55);box-shadow:30px 16px 0 -2px rgba(20,10,6,.45)}
+.ct-rocket-img{filter:drop-shadow(0 8px 14px rgba(0,0,0,.35)) drop-shadow(0 0 16px rgba(255,138,76,.45))}
 @media (max-width:767px){
-  .ct-streak{filter:none}
-  .ct-tail,.ct-rock{display:none!important}
+  .ct-fly,.ct-tail,.ct-rock{display:none!important}
+  .ct-space-anim,.ct-space-anim svg{animation:none!important}
+  .ct-rocket-img{filter:none!important}
 }
-@media (prefers-reduced-motion:reduce){.ct-fly,.ct-rock{animation:none!important}}
+@media (prefers-reduced-motion:reduce){.ct-fly,.ct-rock,.ct-space-anim,.ct-space-anim svg{animation:none!important}}
 `;
 
 // the planet we land on: a real Earth photo texture (public/space/earth.webp, India near the top),
@@ -432,6 +434,7 @@ export function RocketJourney({ children }) {
             {/* Milky Way photo: scroll parallax (outer) + slow endless drift (inner) */}
             <div ref={bgRef} style={{ position: "absolute", inset: "-8%", willChange: "transform" }}>
               <div
+                className="ct-space-anim"
                 style={{
                   position: "absolute",
                   inset: 0,
@@ -443,10 +446,10 @@ export function RocketJourney({ children }) {
               />
             </div>
             {/* moving stars: scroll parallax + slow pan + twinkle */}
-            <div style={{ position: "absolute", inset: 0, animation: "ct-pan 50s linear infinite alternate" }}>
+            <div className="ct-space-anim" style={{ position: "absolute", inset: 0, animation: "ct-pan 50s linear infinite alternate" }}>
               <Stars stars={FAR_STARS} svgRef={farRef} style={{ position: "absolute", left: 0, top: "-12%", height: "124%", willChange: "transform", animation: "ct-twinkle 7s ease-in-out infinite" }} />
             </div>
-            <div style={{ position: "absolute", inset: 0, animation: "ct-pan 28s linear infinite alternate" }}>
+            <div className="ct-space-anim" style={{ position: "absolute", inset: 0, animation: "ct-pan 28s linear infinite alternate" }}>
               <Stars stars={NEAR_STARS} svgRef={nearRef} style={{ position: "absolute", left: 0, top: "-30%", height: "160%", willChange: "transform", animation: "ct-twinkle 4.5s ease-in-out infinite" }} />
             </div>
             {/* shooting stars */}
@@ -514,12 +517,13 @@ export function RocketJourney({ children }) {
             <img
               ref={rocket}
               src="/rocket/rocket.webp"
-          loading="lazy"
-          decoding="async"
+              loading="lazy"
+              decoding="async"
               alt=""
               width={104}
               height={104}
               draggable={false}
+              className="ct-rocket-img"
               style={{
                 position: "absolute",
                 left: 0,
@@ -527,7 +531,6 @@ export function RocketJourney({ children }) {
                 opacity: 0,
                 transformOrigin: "50% 50%",
                 willChange: "transform, opacity",
-                filter: "drop-shadow(0 8px 14px rgba(0,0,0,.35)) drop-shadow(0 0 16px rgba(255,138,76,.45))",
                 userSelect: "none",
               }}
             />

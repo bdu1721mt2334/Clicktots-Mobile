@@ -87,7 +87,13 @@ export default function ShutterTransition({ color = "#D2D2D2" }) {
   });
 
   const wasActive = useRef(false);
+  const wasLight = useRef(false);
   useMotionValueEvent(scrollYProgress, "change", (v) => {
+    const light = v >= 0.68;
+    if (light !== wasLight.current) {
+      wasLight.current = light;
+      if (wrapRef.current) wrapRef.current.dataset.shutterLight = light ? "1" : "";
+    }
     const active = v > 0;
     if (active === wasActive.current) return;
     wasActive.current = active;

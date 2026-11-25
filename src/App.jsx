@@ -5,6 +5,8 @@ import { Earthrise } from "@/pages/Earthrise/Earthrise";
 import { AboutReveal } from "@/pages/About/AboutReveal";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useTextFade } from "@/hooks/useTextFade";
+import useSiteTheme from "@/hooks/useSiteTheme";
+import SiteThemeToggle from "@/components/ThemeToggle/SiteThemeToggle";
 import { startScroll, scrollToTarget } from "@/lib/scroll";
 import { usePathname, navigate, goHome } from "@/lib/router";
 import { findServiceByPath } from "@/pages/Services/servicesData";
@@ -55,6 +57,7 @@ function useEverOpen(open) {
 function HomePage() {
   const [activeTab, setActiveTab] = useState("home");
   const reduced = useReducedMotion();
+  const [theme, toggleTheme] = useSiteTheme();
   useTextFade(reduced);
 
   // Mount below-the-fold chunk on first user scroll/interaction or deep-link (keeps initial LCP & main thread ultra-fast)
@@ -175,7 +178,12 @@ function HomePage() {
         logoLanded={true}
         activeTab={routeTab || activeTab}
         onTabChange={handleTabChange}
+        onLogoClick={() => handleTabChange("home")}
+        theme={theme}
       />
+
+      {/* Floating Day / Dark mode switch (hidden while Career overlay shows its own toggle) */}
+      <SiteThemeToggle theme={theme} onToggle={toggleTheme} hidden={careerOpen} />
 
       {/* Hero: Earthrise displays immediately on first paint with no intro screen */}
       <Earthrise />
@@ -185,7 +193,7 @@ function HomePage() {
 
       {restReady && (
         <Suspense fallback={null}>
-          <HomeRest reduced={reduced} />
+          <HomeRest reduced={reduced} theme={theme} />
         </Suspense>
       )}
 

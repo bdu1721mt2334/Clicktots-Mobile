@@ -9,7 +9,7 @@ import { HoverIndexList } from "@/components/features/hover-index-list";
  */
 export default function Awards() {
   return (
-    <div id="c-awards" style={{ background: "#E9E6DF" }}>
+    <div id="c-awards" style={{ background: "var(--awards-bg, #E9E6DF)" }}>
       <HoverIndexList
         eyebrow="Recognition"
         title={<>Awards &amp;<br />milestones</>}

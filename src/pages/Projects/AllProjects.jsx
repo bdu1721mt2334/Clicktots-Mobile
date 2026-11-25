@@ -13,6 +13,7 @@ import { CaseStudyModal } from "@/components/StackSlider/CaseStudyModal";
 import { TiltCard } from "@/components/TiltCard/TiltCard";
 import BlurReveal from "@/components/animations/BlurReveal";
 import SpaceBackdrop from "@/components/SpaceBackdrop/SpaceBackdrop";
+import useSiteTheme from "@/hooks/useSiteTheme";
 
 /* ── Shutter-bar page transition ─────────────────────────────────────────────
    Same animation as About Us → Key Facts (ShutterTransition.jsx): 5 horizontal
@@ -86,6 +87,8 @@ function WorkCard({ item, index, onOpen, ref }) {
 
 function ProjectsPageContent({ onClose, onOpenProject, selected, onCloseProject, onSelectProject }) {
   const [filter, setFilter] = useState("All");
+  const [theme] = useSiteTheme();
+  const isDark = theme === "dark";
 
   const tabs = useMemo(
     () => [
@@ -114,10 +117,14 @@ function ProjectsPageContent({ onClose, onOpenProject, selected, onCloseProject,
   }, [selected, onClose]);
 
   return (
-    <div className="stack-slider-scope absolute inset-0 bg-[#0B0C0E] text-white">
+    <div
+      className={`stack-slider-scope absolute inset-0 transition-colors duration-300 ${
+        isDark ? "bg-[#0B0C0E] text-white" : "bg-[#E9E6DF] text-[#121110]"
+      }`}
+    >
       {/* mission orbits: a planet rises in the corner, satellites (launched projects) circle it */}
-      <SpaceBackdrop variant="orbit" scrollRef={scrollRef} />
-      <BackButton label="Back to home" onClick={onClose} />
+      <SpaceBackdrop variant="orbit" scrollRef={scrollRef} theme={theme} />
+      <BackButton tone={isDark ? "dark" : "light"} label="Back to home" onClick={onClose} />
       {/* data-lenis-prevent: the page's smooth-scroll must not hijack this inner scroller */}
       <div
         ref={scrollRef}
@@ -125,17 +132,25 @@ function ProjectsPageContent({ onClose, onOpenProject, selected, onCloseProject,
         className="absolute inset-0 overflow-y-auto overscroll-contain"
       >
         <div ref={contentRef}>
-        <header className="mx-auto w-full max-w-[1360px] px-6 md:px-12 pt-8 sm:pt-10 pr-24 sm:pr-[220px] flex min-h-[80px] sm:min-h-[88px] items-center justify-start gap-4">
-          <div className="flex items-center gap-3 text-xs font-mono tabular-nums tracking-wide text-white/65">
+        <header className="mx-auto w-full max-w-[1360px] px-6 md:px-12 pt-28 sm:pt-32 flex items-center justify-start gap-4">
+          <div
+            className={`flex items-center gap-3 text-xs font-mono tabular-nums tracking-wide ${
+              isDark ? "text-white/65" : "text-black/60"
+            }`}
+          >
             <span>Selected Works</span>
             <span aria-hidden="true">/</span>
-            <span className="text-white">All Projects</span>
+            <span className={isDark ? "text-white" : "text-[#121110]"}>All Projects</span>
           </div>
         </header>
 
         <main className="mx-auto w-full max-w-[1360px] px-6 md:px-12 pb-24">
           <div className="pt-10 sm:pt-14">
-            <h1 className="font-display text-2xl sm:text-3xl xl:text-5xl font-semibold tracking-tight leading-[1.1] text-white">
+            <h1
+              className={`font-display text-2xl sm:text-3xl xl:text-5xl font-semibold tracking-tight leading-[1.1] ${
+                isDark ? "text-white" : "text-[#121110]"
+              }`}
+            >
               <BlurReveal text="All" delay={0.35} duration={1.1} blur={14} y={18} />{" "}
               <BlurReveal text="work" delay={0.5} duration={1.1} blur={14} y={18} />
             </h1>
@@ -144,7 +159,9 @@ function ProjectsPageContent({ onClose, onOpenProject, selected, onCloseProject,
               text="Websites, SEO, design and more. Pick a category to filter, or open any project for the full case study."
               delay={0.7}
               duration={0.9}
-              className="mt-4 max-w-xl text-sm sm:text-base leading-relaxed text-white/70"
+              className={`mt-4 max-w-xl text-sm sm:text-base leading-relaxed ${
+                isDark ? "text-white/70" : "text-black/70"
+              }`}
             />
           </div>
 
@@ -168,13 +185,15 @@ function ProjectsPageContent({ onClose, onOpenProject, selected, onCloseProject,
                   className={`ct-btn gap-1.5 sm:gap-2 border px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-sm ${
                     active
                       ? "border-[#0071e3] bg-[#0071e3] text-white"
-                      : "border-white/20 text-white/80 hover:border-[#0a84ff] hover:text-white"
+                      : isDark
+                        ? "border-white/20 text-white/80 hover:border-[#0a84ff] hover:text-white"
+                        : "border-black/20 bg-white/55 text-[#121110] hover:border-[#0071e3] hover:text-[#0071e3]"
                   }`}
                 >
                   <span>{t.id === "All" ? "All work" : t.id}</span>
                   <span
                     className={`font-mono text-[9.5px] sm:text-xs tabular-nums ${
-                      active ? "text-white/70" : "text-white/45"
+                      active ? "text-white/75" : isDark ? "text-white/45" : "text-black/50"
                     }`}
                   >
                     {String(t.count).padStart(2, "0")}
@@ -206,7 +225,7 @@ function ProjectsPageContent({ onClose, onOpenProject, selected, onCloseProject,
         items={visible}
         onClose={onCloseProject}
         onSelect={onSelectProject}
-        zIndex={9100}
+        zIndex={9400}
       />
     </div>
   );

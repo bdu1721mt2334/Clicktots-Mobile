@@ -274,3 +274,16 @@
     animation: none;
   }
 }
+
+html[data-site-theme="dark"] .rk-cue-body {
+  color: #f5f7fa;
+  background: rgba(11, 16, 28, 0.78);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 16px 36px -14px rgba(0, 0, 0, 0.75), 0 0 0 4px color-mix(in srgb, var(--c) 24%, transparent);
+}
+html[data-site-theme="dark"] .rk-cue-mouse {
+  border-color: rgba(245, 247, 250, 0.85);
+}
+html[data-site-theme="dark"] .rk-cue-t small {
+  color: rgba(245, 247, 250, 0.65);
+}

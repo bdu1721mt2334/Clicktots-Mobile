@@ -13,6 +13,7 @@ import Footer from "@/components/Footer/Footer";
 import { useOverlayScroll } from "@/hooks/useOverlayScroll";
 import { navigate } from "@/lib/router";
 import SpaceBackdrop from "@/components/SpaceBackdrop/SpaceBackdrop";
+import useSiteTheme from "@/hooks/useSiteTheme";
 import BlogPage from "./BlogPage";
 import BlogArticle from "./BlogArticle";
 import { findPost } from "./blogData";
@@ -29,6 +30,8 @@ function BlogContent({ slug, onClose }) {
   const listScroll = useRef(0);
   const prevSlug = useRef(slug);
   const post = slug ? findPost(slug) : null;
+  const [theme] = useSiteTheme();
+  const isDark = theme === "dark";
 
   // smooth scrolling, also over the fixed footer
   useOverlayScroll(scrollRef, contentRef);
@@ -48,9 +51,13 @@ function BlogContent({ slug, onClose }) {
   };
 
   return (
-    <div className="absolute inset-0 bg-[#07080c] text-white">
+    <div
+      className={`absolute inset-0 transition-colors duration-300 ${
+        isDark ? "bg-[#07080c] text-white" : "bg-[#E9E6DF] text-[#121110]"
+      }`}
+    >
       {/* deep-field stars + nebula; ideas streak past as shooting stars */}
-      <SpaceBackdrop variant="journal" scrollRef={scrollRef} />
+      <SpaceBackdrop variant="journal" scrollRef={scrollRef} theme={theme} />
       <div ref={scrollRef} data-lenis-prevent className="absolute inset-0 overflow-x-hidden overflow-y-auto overscroll-contain">
         <div ref={contentRef}>
           {post ? (
@@ -64,6 +71,7 @@ function BlogContent({ slug, onClose }) {
       </div>
       {/* Back: an article → the list, the list → the home page */}
       <BackButton
+        tone={isDark ? "dark" : "light"}
         label={post ? "All articles" : "Back to home"}
         onClick={() => (post ? navigate("/blog", { replace: true }) : onClose())}
       />

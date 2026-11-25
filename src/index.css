@@ -76,12 +76,13 @@ html.lenis.lenis-stopped { overflow: visible; }
   opacity: 1;
 }
 
-/* ═══ Back pill on inner pages (components/BackButton): top-right, where the old X was ═══ */
+/* ═══ Back pill on inner pages (components/BackButton): top-left under the global Navbar logo ═══ */
 .ct-back {
   position: absolute;
   z-index: 250;
-  top: 20px;
-  right: 20px;
+  top: 68px;
+  left: 16px;
+  right: auto;
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -98,7 +99,7 @@ html.lenis.lenis-stopped { overflow: visible; }
   backdrop-filter: blur(14px) saturate(150%);
   transition: background-color 0.25s, border-color 0.25s, transform 0.2s;
 }
-@media (min-width: 640px) { .ct-back { top: 26px; right: 32px; } }
+@media (min-width: 640px) { .ct-back { top: 80px; left: 32px; right: auto; } }
 .ct-back:active { transform: scale(0.96); }
 .ct-back:focus-visible { outline: 2px solid #0a84ff; outline-offset: 3px; }
 .ct-back-dark { color: #fff; background: rgba(10, 12, 18, 0.45); border: 1px solid rgba(255, 255, 255, 0.16); box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6); }

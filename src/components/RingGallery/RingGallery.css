@@ -10,7 +10,7 @@
   --rg-line: #9c9c9c;
   --rg-dark: #434343;
   --rg-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  background: var(--rg-paper);
+  background: transparent;
   color: var(--rg-ink);
 }
 
@@ -112,20 +112,6 @@
 .rg-choice-words {
   transition: color 0.25s;
 }
-.rg-underline {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: max(2px, 0.05em);
-  background: var(--world);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 1s var(--rg-ease) 0.35s;
-}
-.rg-entered .rg-underline {
-  transform: scaleX(1);
-}
 .rg-choice sup {
   position: relative;
   top: -0.1em;
@@ -157,9 +143,6 @@
 }
 .rg-hovering .rg-choice.rg-active sup {
   color: var(--on);
-}
-.rg-hovering .rg-choice.rg-active .rg-underline {
-  opacity: 0.4;
 }
 
 .rg-frame {
@@ -354,20 +337,6 @@
   inset: 0;
   transform-style: preserve-3d;
   transition: transform 0.16s linear;
-}
-
-.rg-card-frame {
-  position: absolute;
-  inset: -9px;
-  border: 3px solid var(--world);
-  border-radius: 24px;
-  box-shadow: 0 40px 80px -30px var(--world);
-  clip-path: inset(0 100% 0 0 round 24px);
-  transition: clip-path 0.55s var(--rg-ease);
-  pointer-events: none;
-}
-.rg-card:hover .rg-card-frame {
-  clip-path: inset(0 0 0 0 round 24px);
 }
 
 .rg-card-face {
@@ -641,7 +610,6 @@
     transition: none;
   }
   .rg-rise,
-  .rg-underline,
   .rg-choice sup {
     transition: none;
     transform: none;
