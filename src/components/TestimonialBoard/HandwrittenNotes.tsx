@@ -277,7 +277,7 @@ const css = `
 .fd-hwn-reset:active{transform:scale(.96)}
 .fd-hwn-reset:focus-visible{outline:2px solid rgba(242,193,78,.75);outline-offset:2px}
 .fd-hwn-strip{display:contents}
-@media (max-width:1100px) and (min-width:761px){.fd-hwn-desk{height:980px}}
+@media (max-width:1100px) and (min-width:761px){.fd-hwn{padding:52px 24px 52px}.fd-hwn-desk{height:730px}}
 @media (max-width:760px){
   .fd-hwn{padding:48px 16px 56px}
   .fd-hwn-head{flex-direction:column;align-items:flex-start;gap:24px;margin-bottom:24px}

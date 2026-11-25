@@ -237,8 +237,8 @@ function CareerContent({ slug, onClose }) {
         onClick={() => (role ? window.dispatchEvent(new Event("career-back")) : onClose())}
       />
 
-      {/* theme toggle: right side, just under the navbar (follows it when it hides) */}
-      <ThemeToggle theme={theme} onToggle={toggleTheme} className="ct-under-nav absolute right-4 z-20 sm:right-8" />
+      {/* theme toggle: aligned beside the navbar on the top-right */}
+      <ThemeToggle theme={theme} onToggle={toggleTheme} className="ct-under-nav absolute z-20" />
     </div>
   );
 }

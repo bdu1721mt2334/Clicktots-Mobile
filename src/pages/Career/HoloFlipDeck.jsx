@@ -781,24 +781,47 @@ export default function HoloFlipDeck({ onKnowMore, returning = false, onReturnMe
                     }}
                   />
                   <div
+                    ref={glareBackRef}
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      zIndex: 1,
+                      background: glareGradient,
+                      backgroundSize: "250% 250%",
+                      opacity: (0.28 * DEFAULTS.glare) / 100,
+                      pointerEvents: "none",
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      zIndex: 1,
+                      background: "rgba(255, 255, 255, 0.56)",
+                      pointerEvents: "none",
+                    }}
+                  />
+                  <div
                     style={{
                       position: "absolute",
                       inset: keyInset,
+                      zIndex: 1,
                       borderRadius: keyRadius,
                       overflow: "hidden",
                       pointerEvents: "none",
                     }}
                   >
                     <svg width="100%" height="100%" style={{ position: "absolute", inset: 0, display: "block" }}>
-                      <path d={latticePath} stroke="rgba(0,0,0,0.06)" strokeWidth={1} fill="none" />
+                      <path d={latticePath} stroke="rgba(10,13,20,0.06)" strokeWidth={1} fill="none" />
                     </svg>
                   </div>
                   <div
                     style={{
                       position: "absolute",
                       inset: keyInset,
+                      zIndex: 1,
                       borderRadius: keyRadius,
-                      boxShadow: `inset 0 0 0 ${HAIR}px rgba(0,0,0,0.07)`,
+                      boxShadow: `inset 0 0 0 ${HAIR}px rgba(10,13,20,0.12)`,
                       pointerEvents: "none",
                     }}
                   />
@@ -811,11 +834,12 @@ export default function HoloFlipDeck({ onKnowMore, returning = false, onReturnMe
                         justifyContent: "space-between",
                         alignItems: "center",
                         fontFamily: "'Michroma', 'Eurostile', 'Arial Black', sans-serif",
-                        fontSize: px(8),
+                        fontSize: px(8.2),
                         fontWeight: 700,
+                        fontSynthesisWeight: "auto",
                         textTransform: "uppercase",
                         letterSpacing: "0.08em",
-                        color: DEFAULTS.mutedColor,
+                        color: "#1B2230",
                       }}
                     >
                       <span>ClickTots Careers</span>
@@ -825,10 +849,11 @@ export default function HoloFlipDeck({ onKnowMore, returning = false, onReturnMe
                       style={{
                         margin: `${px(8)}px 0 0`,
                         fontFamily: "'Michroma', 'Eurostile', 'Arial Black', sans-serif",
-                        fontSize: px(16),
+                        fontSize: px(15.5),
                         fontWeight: 700,
-                        lineHeight: 1.2,
-                        color: DEFAULTS.textColor,
+                        fontSynthesisWeight: "auto",
+                        lineHeight: 1.24,
+                        color: "#080B12",
                       }}
                     >
                       {role.title}
@@ -853,17 +878,18 @@ export default function HoloFlipDeck({ onKnowMore, returning = false, onReturnMe
                         gap: px(5),
                         padding: px(10),
                         borderRadius: px(10),
-                        background: "rgba(255,255,255,0.52)",
-                        border: "1px solid rgba(0,0,0,0.08)",
+                        background: "rgba(255,255,255,0.88)",
+                        border: "1px solid rgba(10,13,20,0.18)",
                         fontSize: px(9.5),
+                        color: "#0A0D14",
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: px(6), fontWeight: 600 }}>
-                        <MapPin size={px(11)} />
+                      <div style={{ display: "flex", alignItems: "center", gap: px(6), fontWeight: 700, fontSynthesisWeight: "auto", color: "#0A0D14" }}>
+                        <MapPin size={px(12)} color="#0060C7" strokeWidth={2.4} />
                         <span>{role.location} · {role.type}</span>
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: px(6), fontWeight: 600 }}>
-                        <Clock size={px(11)} />
+                      <div style={{ display: "flex", alignItems: "center", gap: px(6), fontWeight: 700, fontSynthesisWeight: "auto", color: "#0A0D14" }}>
+                        <Clock size={px(12)} color="#0060C7" strokeWidth={2.4} />
                         <span>Experience: {role.experience}</span>
                       </div>
                     </div>
@@ -871,11 +897,12 @@ export default function HoloFlipDeck({ onKnowMore, returning = false, onReturnMe
                     <div>
                       <div
                         style={{
-                          fontSize: px(8),
+                          fontSize: px(8.2),
                           fontWeight: 700,
+                          fontSynthesisWeight: "auto",
                           textTransform: "uppercase",
                           letterSpacing: "0.08em",
-                          color: DEFAULTS.mutedColor,
+                          color: "#1B2230",
                           marginBottom: px(5),
                         }}
                       >
@@ -888,10 +915,12 @@ export default function HoloFlipDeck({ onKnowMore, returning = false, onReturnMe
                             style={{
                               padding: `${px(3.5)}px ${px(8)}px`,
                               borderRadius: 999,
-                              background: "rgba(255,255,255,0.65)",
-                              border: "1px solid rgba(0,0,0,0.1)",
+                              background: "rgba(255,255,255,0.92)",
+                              border: "1px solid rgba(10,13,20,0.2)",
                               fontSize: px(8.5),
-                              fontWeight: 600,
+                              fontWeight: 700,
+                              fontSynthesisWeight: "auto",
+                              color: "#080B12",
                             }}
                           >
                             {sk}
@@ -903,9 +932,11 @@ export default function HoloFlipDeck({ onKnowMore, returning = false, onReturnMe
                     <p
                       style={{
                         margin: 0,
-                        fontSize: px(9.5),
-                        lineHeight: 1.42,
-                        color: DEFAULTS.textColor,
+                        fontSize: px(9.6),
+                        lineHeight: 1.45,
+                        fontWeight: 600,
+                        fontSynthesisWeight: "auto",
+                        color: "#0B0E16",
                       }}
                     >
                       {role.shortSummary}
@@ -930,7 +961,7 @@ export default function HoloFlipDeck({ onKnowMore, returning = false, onReturnMe
                         padding: `${px(10)}px ${px(14)}px`,
                         borderRadius: 8,
                         border: "none",
-                        background: "#0A84FF",
+                        background: "#0071E3",
                         color: "#FFFFFF",
                         fontSynthesisWeight: "auto",
                         fontFamily: "'Michroma', 'Eurostile', 'Arial Black', sans-serif",
@@ -949,18 +980,6 @@ export default function HoloFlipDeck({ onKnowMore, returning = false, onReturnMe
                       <ArrowUpRight size={px(13)} />
                     </button>
                   </div>
-
-                  <div
-                    ref={glareBackRef}
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      background: glareGradient,
-                      backgroundSize: "250% 250%",
-                      opacity: (0.35 * DEFAULTS.glare) / 100,
-                      pointerEvents: "none",
-                    }}
-                  />
                 </div>
 
                 {/* Metal Clip */}

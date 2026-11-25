@@ -13,7 +13,7 @@ export default function SiteThemeToggle({ theme, onToggle, hidden = false }) {
       aria-label={isDark ? "Switch to day (light) mode" : "Switch to dark mode"}
       title={isDark ? "Switch to Day Mode" : "Switch to Dark Mode"}
       data-site-toggle=""
-      className="ct-site-theme-btn fixed right-4 top-[66px] sm:right-8 sm:top-[78px] z-[9200] flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl cursor-pointer overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]"
+      className="ct-site-theme-btn fixed right-16 top-4 sm:right-[76px] sm:top-6 lg:right-3 lg:top-[22px] xl:right-4 xl:top-[23px] z-[9200] flex h-10 w-10 sm:h-[42px] sm:w-[42px] lg:h-[36px] lg:w-[36px] xl:h-[42px] xl:w-[42px] items-center justify-center rounded-xl cursor-pointer overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]"
     >
       <AnimatePresence mode="wait" initial={false}>
         <motion.span

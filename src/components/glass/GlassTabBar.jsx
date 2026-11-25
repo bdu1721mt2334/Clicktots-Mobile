@@ -390,9 +390,10 @@ const tabCss = `
   .fd-gtab .fd-gtab-tab,.fd-gtab .fd-gtab-lbl{font-size:10.5px}
 }
 @media (min-width:1024px) and (max-width:1279px){
-  .fd-gtab-bar{max-width:640px}
-  .fd-gtab-tab{padding:0 11px}
-  .fd-gtab .fd-gtab-tab,.fd-gtab .fd-gtab-lbl{font-size:10px}
+  .fd-gtab{--fd-gtab-h:38px}
+  .fd-gtab-bar{max-width:580px}
+  .fd-gtab-tab{padding:0 8.5px}
+  .fd-gtab .fd-gtab-tab,.fd-gtab .fd-gtab-lbl{font-size:9.2px;letter-spacing:0.01em}
 }
 @media (prefers-reduced-motion: reduce){
   .fd-gtab-roll>span{transition:none}

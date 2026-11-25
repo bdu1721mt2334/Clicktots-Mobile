@@ -656,16 +656,16 @@ export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, 
     <>
       <header
         ref={headerRef}
-        className="ct-nav fixed top-0 inset-x-0 z-[9150] pointer-events-none px-4 sm:px-8 pt-4 sm:pt-6"
+        className="ct-nav fixed top-0 inset-x-0 z-[9150] pointer-events-none px-4 sm:px-6 lg:pr-[64px] xl:px-8 xl:pr-[74px] pt-4 sm:pt-6"
         style={{
           // "none" (not translateY(0)) when shown, so the fixed mobile drawer inside is not trapped by a transform
           transform: navHidden ? "translate3d(0,-140%,0)" : "none",
           transition: "transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
         }}
       >
-        <div className="relative max-w-7xl mx-auto flex items-center justify-between gap-4">
+        <div className="relative max-w-7xl mx-auto flex items-center justify-between gap-2 xl:gap-4">
           {/* Left: Authentic Clicktots Logo (No extra text or setting icons) */}
-          <motion.div {...drop(logoLanded, 0.1)} className="pointer-events-auto flex items-center">
+          <motion.div {...drop(logoLanded, 0.1)} className="pointer-events-auto flex shrink-0 items-center">
             <a
               href="#"
               onClick={onLogoClick ? (e) => { e.preventDefault(); onLogoClick(); } : undefined}
@@ -679,7 +679,7 @@ export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, 
                 width={120}
                 height={40}
                 decoding="sync"
-                className={`h-8 sm:h-10 w-auto object-contain ${
+                className={`h-8 sm:h-9 lg:h-7 xl:h-10 w-auto object-contain ${
                   onLightSurface
                     ? "lg:drop-shadow-[0_2px_10px_rgba(18,17,16,0.12)]"
                     : "lg:drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)]"
@@ -690,7 +690,7 @@ export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, 
 
           {/* Center: iPhone liquid glass tab bar + Seed-style frosted glass Services dropdown */}
           <div
-            className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 lg:block"
+            className="pointer-events-none hidden lg:flex lg:flex-1 lg:justify-center xl:flex-none xl:absolute xl:left-1/2 xl:top-1/2 xl:-translate-x-1/2 xl:-translate-y-1/2 relative"
             onMouseEnter={() => clearTimeout(closeMenuTimer.current)}
             onMouseLeave={scheduleCloseServicesMenu}
           >
@@ -721,8 +721,8 @@ export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, 
             />
           </div>
 
-          {/* Right: Liquid Glass Blue Button (Desktop) */}
-          <motion.div {...drop(isRevealed, 0.4)} className="pointer-events-auto hidden lg:flex items-center">
+          {/* Right: Liquid Glass Blue Button (Desktop & Tablet Landscape) */}
+          <motion.div {...drop(isRevealed, 0.4)} className="pointer-events-auto hidden lg:flex shrink-0 items-center">
             <LiquidGlass
               as="button"
               type="button"
@@ -735,11 +735,11 @@ export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, 
               refraction={1.25}
               dispersion={0.06}
               blur={14}
-              style={{ fontSize: "9.5px", lineHeight: 1, paddingLeft: 22, paddingRight: 7 }}
-              className="group relative inline-flex items-center justify-center gap-3 h-9 sm:h-[42px] text-[9px] sm:text-[9.5px] text-white tracking-[0.02em] transition-all shadow-[0_8px_30px_-6px_rgba(0,122,255,0.6)] hover:shadow-[0_12px_36px_-4px_rgba(0,122,255,0.85)] cursor-pointer select-none active:scale-95"
+              style={{ lineHeight: 1 }}
+              className="ct-nav-cta group relative inline-flex items-center justify-center gap-2 xl:gap-3 h-[34px] xl:h-[42px] pl-3 pr-1.5 xl:pl-[22px] xl:pr-[7px] text-[8px] xl:text-[9.5px] text-white tracking-[0.02em] transition-all shadow-[0_8px_30px_-6px_rgba(0,122,255,0.6)] hover:shadow-[0_12px_36px_-4px_rgba(0,122,255,0.85)] cursor-pointer select-none active:scale-95"
             >
               {/* hover state from the blueprint: "Talk to Our Experts" rolls up into "Launch AI Growth Audit" */}
-              <span className="relative z-10 grid shrink-0 overflow-hidden whitespace-nowrap text-[9px] sm:text-[9.5px] font-medium text-white drop-shadow-sm">
+              <span className="relative z-10 grid shrink-0 overflow-hidden whitespace-nowrap text-[8px] xl:text-[9.5px] font-medium text-white drop-shadow-sm">
                 <span className="col-start-1 row-start-1 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-[130%] motion-reduce:transition-none">
                   Talk to Our Experts
                 </span>
@@ -751,8 +751,8 @@ export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, 
                 </span>
               </span>
               <span className="ct-cta-chip" aria-hidden="true">
-                <ArrowUpRight className="ct-cta-a w-3 h-3 text-white" strokeWidth={2.4} />
-                <ArrowUpRight className="ct-cta-b w-3 h-3 text-white" strokeWidth={2.4} />
+                <ArrowUpRight className="ct-cta-a w-2.5 h-2.5 xl:w-3 xl:h-3 text-white" strokeWidth={2.4} />
+                <ArrowUpRight className="ct-cta-b w-2.5 h-2.5 xl:w-3 xl:h-3 text-white" strokeWidth={2.4} />
               </span>
             </LiquidGlass>
           </motion.div>
