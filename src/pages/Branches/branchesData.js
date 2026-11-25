@@ -73,8 +73,8 @@ export const VIEW = {
 
 /* Chapter 1 framing: the India + Dubai window the camera holds while the India signal runs (no rebuild needed) */
 export const FRAME_INDIA = { lon0: 53, lon1: 92.5, lat0: 33, lat1: 6.5 };
-/* phones: India + Dubai, a little smaller, centred in the space under the city list */
-export const FRAME_INDIA_PHONE = { lon0: 43, lon1: 101, lat0: 34, lat1: 5.5 };
+/* phones: single static close-up of India + Dubai filling the area below the city list with zero label clipping */
+export const FRAME_INDIA_PHONE = { lon0: 51.5, lon1: 89.5, lat0: 32.5, lat1: 7.0 };
 
 /* the area that gets the detailed (1:50m) coastline for the close-up. Must cover FRAME_INDIA with room to spare.
    After changing it, run: npm run build:world-map */

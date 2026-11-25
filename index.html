@@ -24,26 +24,14 @@
         src: url("/fonts/michroma-latin-400.woff2") format("woff2");
       }
       html, body { background: #05070c; }
-      #ct-prehero { position: absolute; left: 0; top: 0; width: 100%; height: 100vh; height: 100svh; z-index: 45; background: #05070c; pointer-events: none; transition: opacity 0.7s ease; }
-      #ct-prehero img { display: block; width: 100%; height: calc(100% - 2px); object-fit: cover; object-position: center top; }
-      #ct-prehero.is-out { opacity: 0; }
     </style>
-    <link rel="preload" as="image" href="/layers/d/hero-poster.webp" media="(min-width: 768px)" fetchpriority="high" />
-    <link rel="preload" as="image" href="/layers/m/hero-poster.webp" media="(max-width: 767px)" fetchpriority="high" />
+    <link rel="preload" as="image" href="/layers/d/moonscape.webp" media="(min-width: 768px)" fetchpriority="high" />
+    <link rel="preload" as="image" href="/layers/d/sky.webp" media="(min-width: 768px)" fetchpriority="high" />
+    <link rel="preload" as="image" href="/layers/m/moonscape.webp" media="(max-width: 767px)" fetchpriority="high" />
+    <link rel="preload" as="image" href="/layers/m/sky.webp" media="(max-width: 767px)" fetchpriority="high" />
+    <link rel="preload" as="image" href="/layers/m/earth.webp" media="(max-width: 767px)" fetchpriority="high" />
   </head>
   <body>
-    <!-- First frame of the hero, painted straight from the HTML (no JavaScript needed): a still of the real
-         hero (public/layers/{d,m}/hero-poster.webp – re-capture it if the hero's look changes).
-         It is the page's Largest Contentful Paint, so PageSpeed no longer waits for the app bundle.
-         App.jsx fades it out once the real hero (same picture underneath) has faded in.
-         Chrome never counts a picture that covers the WHOLE viewport as LCP (it treats it as a background),
-         so it is absolute (not fixed) and 2px short of the bottom edge – invisible on the dark background. -->
-    <div id="ct-prehero" aria-hidden="true">
-      <picture>
-        <source media="(max-width: 767px)" srcset="/layers/m/hero-poster.webp" />
-        <img src="/layers/d/hero-poster.webp" alt="" fetchpriority="high" width="2400" height="1350" />
-      </picture>
-    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

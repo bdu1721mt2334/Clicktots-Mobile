@@ -218,26 +218,27 @@ const CSS = `
 @media (max-height:780px){.bm-narrative{display:none}}
 @media (max-width:899px){
   .bm-narrative{display:none}
+  .bm-title{top:clamp(54px,7vh,70px)!important}
   .bm-map{right:0;left:0;margin:0 auto;top:auto;bottom:1vh;height:min(70vh,74vw)}
-  .bm-blur{width:100%!important;bottom:auto;height:46vh;background:linear-gradient(180deg,rgba(4,7,13,.94) 0,rgba(4,7,13,.88) 88%,rgba(4,7,13,0) 100%);-webkit-mask-image:linear-gradient(180deg,#000 0,#000 90%,transparent 100%);mask-image:linear-gradient(180deg,#000 0,#000 90%,transparent 100%)}
+  .bm-blur{width:100%!important;bottom:auto;height:42vh;background:linear-gradient(180deg,rgba(4,7,13,.95) 0,rgba(4,7,13,.9) 88%,rgba(4,7,13,0) 100%);-webkit-backdrop-filter:none;backdrop-filter:none;-webkit-mask-image:linear-gradient(180deg,#000 0,#000 90%,transparent 100%);mask-image:linear-gradient(180deg,#000 0,#000 90%,transparent 100%)}
 }
 .bm-mlist{display:none}
 @media (max-width:899px){
-  .bm-title-h{font-size:clamp(1.05rem,4.6vw,1.6rem)!important;line-height:1.25!important}
-  .bm-title-eyebrow{font-size:9.5px!important;line-height:14px!important;margin-bottom:8px!important}
+  .bm-title-h{font-size:clamp(1.02rem,4.4vw,1.5rem)!important;line-height:1.22!important}
+  .bm-title-eyebrow{font-size:9px!important;line-height:13px!important;margin-bottom:6px!important}
   .bm-map{bottom:-2vh;height:min(60vh,80vw)}
-  .bm-mlist{display:block;position:absolute;left:6vw;right:6vw;top:calc(9vh + 118px);pointer-events:none}
-  .bm-ilabel{font-size:11px}
+  .bm-mlist{display:block;position:absolute;left:6vw;right:6vw;top:calc(7vh + 98px);pointer-events:none}
+  .bm-ilabel{font-size:10.5px}
   /* softer edge fade: the crop already ends at the hubs */
   .bm-world{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 3%,#000 97%,transparent 100%),linear-gradient(180deg,transparent 0,#000 4%,#000 92%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 3%,#000 97%,transparent 100%),linear-gradient(180deg,transparent 0,#000 4%,#000 92%,transparent 100%)}
   .bm-mgroup{position:absolute;left:0;right:0;top:0;will-change:opacity}
-  .bm-mrow{display:flex;align-items:baseline;gap:12px;padding:7px 0;border-top:1px solid rgba(255,255,255,.14)}
+  .bm-mrow{display:flex;align-items:baseline;gap:12px;padding:5px 0;border-top:1px solid rgba(255,255,255,.14)}
   .bm-mrow:last-child{border-bottom:1px solid rgba(255,255,255,.14)}
   .bm-mrow .bm-num{font-size:9.5px}
-  .bm-mrow .bm-city{font-size:13px}
+  .bm-mrow .bm-city{font-size:12.5px}
   .bm-mrow .bm-note{font-size:8.5px}
 }
-@media (max-width:899px) and (max-height:700px){.bm-mrow{padding:5px 0}}
+@media (max-width:899px) and (max-height:700px){.bm-mrow{padding:4px 0}}
 @media (prefers-reduced-motion:reduce){.bm-ring{animation:none;opacity:.5}}
 `;
 
@@ -306,6 +307,7 @@ export default function BranchesMap() {
   const paperText = useRef(null);
   const rocket = useRef(null);
   const markers = useRef([]);
+  const indiaLabels = useRef([]);
   const arcs = useRef([]);
   const heads = useRef([]);
   const rows = useRef([]);
@@ -383,26 +385,28 @@ export default function BranchesMap() {
       /* chapter 1 close-up: FRAME_INDIA (India + Dubai) fitted into the .bm-map box. s0 = how much the world
          map is magnified there; (cx, cy) = where Chennai sits on screen in the close-up */
       const m = mapRef.current;
-      /* phones: where the city list ends (the map goes below it; a dark band covers the list area) */
+      /* phones: where the city list ends (the map fills the generous area below it) */
       let listBottom = 0;
+      const listGap = Math.max(12, G.vh * 0.018);
       if (!wide && title.current) {
-        const listTop = title.current.offsetTop + title.current.offsetHeight + Math.max(26, G.vh * 0.04);
+        const listTop = title.current.offsetTop + title.current.offsetHeight + listGap;
         listBottom = listTop + (mGroupA.current?.offsetHeight || 0);
-        if (blurRef.current) blurRef.current.style.height = `${(listBottom + 28).toFixed(0)}px`;
+        if (blurRef.current) blurRef.current.style.height = `${(listBottom + 16).toFixed(0)}px`;
       }
       if (m) {
         const F = wide ? FRAME_INDIA : FRAME_INDIA_PHONE;
         const [fx0, fy0] = worldXY(F.lon0, F.lat0);
         const [fx1, fy1] = worldXY(F.lon1, F.lat1);
-        // phones: fit India into the space between the list and the bottom of the screen, centred
-        const bw = wide ? m.offsetWidth : G.vw * 0.86;
-        const bt = wide ? m.offsetTop : listBottom + 16;
-        const bh = wide ? m.offsetHeight : Math.max(120, G.vh - bt - 12);
+        // phones: fill almost full width and all remaining height under the city list with zero wasted margins
+        const bw = wide ? m.offsetWidth : G.vw * 0.96;
+        const bt = wide ? m.offsetTop : listBottom + 6;
+        const bh = wide ? m.offsetHeight : Math.max(180, G.vh - bt - 6);
         const bl = wide ? m.offsetLeft : (G.vw - bw) / 2;
-        const ppu = Math.min(bw / (fx1 - fx0), bh / (fy1 - fy0)); // screen px per map unit in the close-up
+        const ppu = Math.min(bw / (fx1 - fx0), bh / (fy1 - fy0));
         G.s0 = Math.max(1.01, ppu / G.ws);
         G.cx = bl + bw / 2 + (wx - (fx0 + fx1) / 2) * ppu;
         G.cy = bt + bh / 2 + (wy - (fy0 + fy1) / 2) * ppu;
+
         /* zoom the globe until India is as big as it is on the dotted map when the map fades in */
         const [gax, gay] = g.earthPoint(SIZE_REF.a.lon, SIZE_REF.a.lat);
         const [gbx, gby] = g.earthPoint(SIZE_REF.b.lon, SIZE_REF.b.lat);
@@ -410,8 +414,23 @@ export default function BranchesMap() {
         const [rax, ray] = worldXY(SIZE_REF.a.lon, SIZE_REF.a.lat);
         const [rbx, rby] = worldXY(SIZE_REF.b.lon, SIZE_REF.b.lat);
         const mapW = Math.hypot(rbx - rax, rby - ray) * ppu * FLAT_START;
-        G.zmax = globeW > 0 ? clamp(mapW / globeW, 1.5, 6) : ZOOM_DEFAULT;
+        G.zmax = globeW > 0 ? clamp(mapW / globeW, 1.5, 7) : ZOOM_DEFAULT;
       }
+
+      /* mobile city label placement: keep Dubai above its dot so it never clips off the left edge */
+      indiaLabels.current.forEach((lbl, i) => {
+        const c = INDIA_HUBS[i];
+        if (!lbl || !c) return;
+        if (!wide && c.id === "dubai") {
+          lbl.setAttribute("x", "4");
+          lbl.setAttribute("y", "-12");
+          lbl.setAttribute("text-anchor", "middle");
+        } else {
+          lbl.setAttribute("x", c.side === "right" ? "11" : "-11");
+          lbl.setAttribute("y", "4.5");
+          lbl.setAttribute("text-anchor", c.side === "right" ? "start" : "end");
+        }
+      });
 
       /* label pins: size each glass pill to its text and place it above (or, on phones if asked, below)
          its marker — fonts and room differ between phone and desktop */
@@ -438,7 +457,7 @@ export default function BranchesMap() {
 
       /* narrow: the list starts a clear gap below the heading (its height depends on the screen width) */
       if (mList.current && title.current) {
-        mList.current.style.top = wide ? "" : `${(title.current.offsetTop + title.current.offsetHeight + Math.max(26, G.vh * 0.04)).toFixed(0)}px`;
+        mList.current.style.top = wide ? "" : `${(title.current.offsetTop + title.current.offsetHeight + listGap).toFixed(0)}px`;
       }
 
       if (rocket.current) rocket.current.style.width = rocket.current.style.height = `${G.rs}px`;
@@ -542,9 +561,9 @@ export default function BranchesMap() {
         if (txt) txt.style.clipPath = `inset(0 ${((1 - arrive) * 100).toFixed(1)}% 0 0)`;
       });
 
-      /* ONE camera over one dotted map. Chapter 1 holds the India close-up (magnified s0, settling from
-         FLAT_START); chapter 2 pulls back to the whole world (s0 → 1, on a log scale so it feels like a steady
-         camera move), always locked on Chennai. */
+      /* ONE camera over one dotted map. Chapter 1 holds the static India + Dubai close-up (magnified s0,
+         settling from FLAT_START); chapter 2 pulls back to the whole world (s0 → 1, on a log scale), always
+         locked on Chennai. */
       const gt = inOut(range(p, T_GLOBAL[0], T_GLOBAL[1]));
       const wm = Math.pow(G.s0, 1 - gt) * ms; // map magnification
       const ccx = lerp(G.cx, G.wcx, gt);
@@ -722,10 +741,11 @@ export default function BranchesMap() {
     update();
     const off = onFrame(update);
     const relayout = () => {
+      if (Math.abs(stageEl.offsetWidth - G.vw) < 1 && Math.abs(stageEl.offsetHeight - G.vh) < 1) return;
       layout();
       update();
     };
-    window.addEventListener("resize", relayout);
+    window.addEventListener("resize", relayout, { passive: true });
     const ro = new ResizeObserver(relayout);
     ro.observe(stageEl);
     return () => {
@@ -905,7 +925,13 @@ export default function BranchesMap() {
                     <circle className="bm-ring" r="7" />
                     <circle className="bm-ring b" r="7" />
                     <circle r="5" fill="#fff" stroke={SIGNAL_COLOR} strokeWidth="2.4" />
-                    <text x={c.side === "right" ? 12 : -12} y="4.5" textAnchor={c.side === "right" ? "start" : "end"} className="bm-ilabel">
+                    <text
+                      ref={(el) => (indiaLabels.current[i] = el)}
+                      x={c.side === "right" ? 12 : -12}
+                      y="4.5"
+                      textAnchor={c.side === "right" ? "start" : "end"}
+                      className="bm-ilabel"
+                    >
                       {c.name}
                     </text>
                   </g>

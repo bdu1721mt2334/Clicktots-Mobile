@@ -1,64 +1,7 @@
 /* ════════════════════════════════════════════════════════════════════
-   360° AI ORBIT — light sweep (track, beam, scan line, card glow), header, counter + progress arc.
-   Markup + per-frame positions: ./Orbit.jsx (called from RingGallery's scroll loop).
+   360° AI ORBIT HUD — header, counter + progress arc.
+   (Orbit track / light sweep / per-frame card glow removed for 120fps smoothness.)
    ════════════════════════════════════════════════════════════════════ */
-.rg-track,
-.rg-beam,
-.rg-scan {
-  position: absolute;
-  left: 0;
-  top: 0;
-  display: block;
-  pointer-events: none;
-  visibility: hidden;
-  will-change: transform, opacity;
-}
-
-/* the 360° circle the beam travels on */
-.rg-track {
-  border-radius: 50%;
-  border: 1px solid rgba(10, 132, 255, 0.28);
-  box-shadow: 0 0 18px rgba(10, 132, 255, 0.12);
-}
-
-/* the light beam: a conic wedge on the floor of the ring, masked to a band under the cards;
-   its bright head is at 12 o'clock and the glow trails behind it */
-.rg-beam {
-  border-radius: 50%;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg 300deg,
-    rgba(10, 132, 255, 0.1) 318deg,
-    rgba(10, 132, 255, 0.42) 350deg,
-    rgba(215, 236, 255, 0.95) 359deg,
-    transparent 360deg
-  );
-  -webkit-mask-image: radial-gradient(closest-side, transparent 72%, #000 84%, #000 96%, transparent 100%);
-  mask-image: radial-gradient(closest-side, transparent 72%, #000 84%, #000 96%, transparent 100%);
-}
-
-/* the upright scan line standing at the beam's head */
-.rg-scan {
-  width: 2px;
-  margin-left: -1px;
-  background: linear-gradient(0deg, rgba(215, 236, 255, 0.95) 0%, rgba(10, 132, 255, 0.45) 45%, transparent 100%);
-  box-shadow: 0 0 14px 3px rgba(10, 132, 255, 0.35);
-  border-radius: 2px;
-}
-
-/* a card lights up as the beam passes (--lit 0 → 1, written per frame) */
-.rg-card {
-  --lit: 0;
-}
-.rg-card .rg-card-face {
-  box-shadow:
-    0 18px 36px -24px rgba(0, 0, 0, 0.45),
-    0 0 0 calc(var(--lit) * 2px) rgba(150, 205, 255, calc(var(--lit) * 0.95)),
-    0 0 calc(var(--lit) * 38px) rgba(10, 132, 255, calc(var(--lit) * 0.55));
-}
-.rg-card .rg-card-face > img {
-  filter: brightness(calc(1 + var(--lit) * 0.2)) saturate(calc(1 + var(--lit) * 0.15));
-}
 
 /* unroll: the 10 capabilities light up in their 5 pillar colours */
 .rg-converge .rg-card-frame {
@@ -89,11 +32,10 @@
   flex-direction: column;
   gap: 10px;
 }
-/* each header line rises out of its own mask (transform written per frame) */
 .rg-hl-mask {
   display: block;
   overflow: hidden;
-  padding-bottom: 0.08em; /* room for descenders inside the mask */
+  padding-bottom: 0.08em;
 }
 .rg-hl-line {
   display: block;
@@ -139,10 +81,8 @@
   gap: 14px;
   padding: 10px 16px 10px 10px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.85);
   opacity: 0;
   will-change: transform, opacity;
 }
@@ -153,7 +93,6 @@
   padding-right: 14px;
   border-right: 1px solid rgba(10, 14, 17, 0.18);
 }
-/* odometer: a column of numbers in a one-line mask, rolled with a transition */
 .rg-odo {
   display: block;
   height: 1em;
@@ -164,7 +103,8 @@
 .rg-odo-strip {
   display: flex;
   flex-direction: column;
-  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
 }
 .rg-odo-strip b {
   display: block;
@@ -196,7 +136,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* 0° → 360° progress arc beside the counter */
 .rg-arc {
   width: 34px;
   height: 34px;
@@ -212,10 +151,9 @@
   stroke: #0a84ff;
   stroke-width: 2.4;
   stroke-linecap: round;
-  transition: stroke-dashoffset 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* short screens: header keeps eyebrow + headline only */
 @media (max-height: 820px) {
   .rg-hud-sub {
     display: none !important;
@@ -244,10 +182,10 @@
     position: absolute;
     margin: 0;
     right: 18px;
-    bottom: 96px; /* clears the mobile glass tab bar */
+    bottom: 96px;
     padding: 10px 14px;
     border-radius: 14px;
-    background: rgba(255, 255, 255, 0.72);
+    background: rgba(255, 255, 255, 0.86);
   }
   .rg-odo {
     font-size: 1.7rem;
@@ -268,7 +206,6 @@
   }
 }
 
-/* phones: smaller header type, compact frosted-glass counter */
 @media (max-width: 767px) {
   .rg-hud-title { top: 72px; gap: 6px; }
   .rg-hud-eyebrow { font-size: 8.5px; gap: 8px; letter-spacing: 0.2em; }
@@ -282,11 +219,9 @@
     gap: 10px;
     padding: 7px 12px 7px 8px;
     border-radius: 14px;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.06));
-    border: 1px solid rgba(255, 255, 255, 0.45);
-    box-shadow: 0 8px 24px -10px rgba(10, 14, 17, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.55);
-    -webkit-backdrop-filter: blur(14px) saturate(160%);
-    backdrop-filter: blur(14px) saturate(160%);
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    box-shadow: 0 8px 20px -10px rgba(10, 14, 17, 0.28);
   }
   .rg-hud-num { gap: 4px; padding-right: 10px; }
   .rg-odo { font-size: 1.25rem; }

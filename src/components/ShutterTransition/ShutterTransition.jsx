@@ -1,12 +1,13 @@
 // Purpose: Implement the ShutterTransition components module, keeping this responsibility separate for maintainability.
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform, useMotionValueEvent } from "motion/react";
 import { ArrowUpRight } from "lucide-react";
 import { CAPTION_WORDS, ABOUT_CTA } from "@/pages/About/AboutReveal";
 import { warmRobot } from "@/pages/About/robot/RobotBackdrop";
-import AboutClicktots from "@/pages/About/AboutClicktots";
 import { scrollToTarget } from "@/lib/scroll";
 import { goHome } from "@/lib/router";
+
+const AboutClicktots = lazy(() => import("@/pages/About/AboutClicktots"));
 
 const BAR_COUNT = 5;
 const STAGGER = 0.12;
@@ -39,23 +40,13 @@ function ShutterBar({ progress, index, color }) {
 export default function ShutterTransition({ color = "#D2D2D2" }) {
   const isAboutPath = () => window.location.pathname.replace(/\/+$/, "") === "/about";
   const [aboutOpen, setAboutOpen] = useState(isAboutPath);
+  const [aboutEver, setAboutEver] = useState(isAboutPath);
   const [originRect, setOriginRect] = useState(null);
   const buttonRef = useRef(null);
 
   useEffect(() => {
-    // build the About robot ahead of time, so About opens with it already there. Only in genuinely idle
-    // time, a few seconds after load (never in the middle of the hero animation)
-    const run = () => warmRobot().catch(() => {});
-    let id = 0;
-    const t = setTimeout(() => {
-      if ("requestIdleCallback" in window) id = window.requestIdleCallback(run);
-      else run();
-    }, 6000);
-    return () => {
-      clearTimeout(t);
-      if (id) window.cancelIdleCallback?.(id);
-    };
-  }, []);
+    if (aboutOpen && !aboutEver) setAboutEver(true);
+  }, [aboutOpen, aboutEver]);
 
   useEffect(() => {
     const sync = () => setAboutOpen(isAboutPath());
@@ -189,15 +180,19 @@ export default function ShutterTransition({ color = "#D2D2D2" }) {
         />
       </motion.div>
 
-      <AboutClicktots
-        open={aboutOpen}
-        originRect={originRect}
-        onClose={closeAbout}
-        onExploreWork={() => {
-          closeAbout();
-          setTimeout(() => scrollToTarget(document.getElementById("projects")), 850);
-        }}
-      />
+      {aboutEver && (
+        <Suspense fallback={null}>
+          <AboutClicktots
+            open={aboutOpen}
+            originRect={originRect}
+            onClose={closeAbout}
+            onExploreWork={() => {
+              closeAbout();
+              setTimeout(() => scrollToTarget(document.getElementById("projects")), 850);
+            }}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

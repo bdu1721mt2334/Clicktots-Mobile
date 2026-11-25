@@ -65,9 +65,11 @@ function RollingCard({
   });
   const rotateX = useTransform(offset, (o) => (prefersReducedMotion ? 0 : o * -7.5));
   const filter = useTransform(offset, (o) => {
-    if (prefersReducedMotion) return 'blur(0px)';
+    if (prefersReducedMotion || (typeof window !== 'undefined' && window.innerWidth < 768)) {
+      return 'none';
+    }
     const blurPx = Math.min(Math.abs(o) * 6.5, 14);
-    return `blur(${blurPx.toFixed(2)}px)`;
+    return blurPx < 0.08 ? 'none' : `blur(${blurPx.toFixed(2)}px)`;
   });
   const zIndex = useTransform(offset, (o) => 50 - Math.round(Math.abs(o) * 10));
 
@@ -206,9 +208,9 @@ function LetterSwapTitle({ text, prefersReducedMotion }: LetterSwapTitleProps) {
                       className="inline-block overflow-hidden align-bottom py-[0.04em] -my-[0.04em]"
                     >
                       <motion.span
-                        initial={{ y: '105%', opacity: 0, filter: 'blur(4px)' }}
-                        animate={{ y: '0%', opacity: 1, filter: 'blur(0px)' }}
-                        exit={{ y: '-105%', opacity: 0, filter: 'blur(4px)' }}
+                        initial={{ y: '105%', opacity: 0 }}
+                        animate={{ y: '0%', opacity: 1 }}
+                        exit={{ y: '-105%', opacity: 0 }}
                         transition={{
                           duration: 0.44,
                           ease: [0.16, 1, 0.3, 1],
@@ -282,7 +284,8 @@ export function StackSlider({
   const textP = useTransform(enter, [0.05, 0.65], [0, 1]);
   const imageP = useTransform(enter, [0.1, 0.75], [0, 1]);
   const travel = prefersReducedMotion ? 0 : 1;
-  const blurMax = prefersReducedMotion ? 0 : 18;
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const blurMax = prefersReducedMotion || isMobile ? 0 : 18;
   const textX = useTransform(textP, [0, 1], [-110 * travel, 0]);
   const imageX = useTransform(imageP, [0, 1], [150 * travel, 0]);
   const textFilter = useTransform(textP, (v) => (v >= 0.995 || !blurMax ? 'none' : `blur(${((1 - v) * blurMax).toFixed(2)}px)`));

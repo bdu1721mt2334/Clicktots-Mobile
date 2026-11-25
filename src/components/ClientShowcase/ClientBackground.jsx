@@ -73,6 +73,7 @@ export default function ClientBackground() {
     };
 
     const onMove = (e) => {
+      if (!running) return;
       const r = canvas.getBoundingClientRect();
       mouse.x = e.clientX - r.left;
       mouse.y = e.clientY - r.top;
@@ -81,7 +82,7 @@ export default function ClientBackground() {
     resize();
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
-    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointermove", onMove, { passive: true });
 
     // only animate while the section is on screen
     const io = new IntersectionObserver(([e]) => {

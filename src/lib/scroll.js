@@ -21,9 +21,16 @@ const subscribers = new Set();
 const watched = new Set();
 const frameRects = new Map();
 let inFrame = false;
+let lastMeasuredY = NaN;
+let layoutDirty = true;
+let lastLayoutTick = 0;
+
 export function scrollRect(el) {
   if (!el) return { top: 0, bottom: 0, left: 0, right: 0, width: 0, height: 0 };
-  watched.add(el);
+  if (!watched.has(el)) {
+    watched.add(el);
+    layoutDirty = true;
+  }
   if (inFrame) {
     const r = frameRects.get(el);
     if (r) return r;
@@ -41,10 +48,20 @@ export const getScrollY = () => frameY;
 let paused = false;
 let running = false;
 
+const markDirty = () => {
+  layoutDirty = true;
+};
+
 const readStep = ({ timestamp }) => {
   if (paused) return;
   lenis?.raf(timestamp);
   frameY = lenis ? lenis.animatedScroll : window.scrollY;
+  // Refresh geometry only when scroll moved, layout resized/changed, or periodically (every 500ms)
+  const moved = Math.abs(frameY - lastMeasuredY) > 0.05;
+  if (!moved && !layoutDirty && timestamp - lastLayoutTick < 500) return;
+  lastMeasuredY = frameY;
+  layoutDirty = false;
+  lastLayoutTick = timestamp;
   // one clean geometry read for every watched element, before anyone writes styles this frame
   frameRects.clear();
   watched.forEach((el) => {
@@ -76,13 +93,21 @@ function kick() {
 }
 
 export function startScroll(reducedMotion) {
-  if (!reducedMotion) {
-    lenis = new Lenis({ lerp: 0.09, smoothWheel: true, wheelMultiplier: 0.9 });
+  const isTouchMobile =
+    typeof window !== "undefined" &&
+    (window.matchMedia?.("(pointer: coarse)").matches ||
+      ("ontouchstart" in window && navigator.maxTouchPoints > 0 && window.innerWidth < 1024));
+
+  // Keep native compositor touch scrolling on Android/iOS; use Lenis smooth wheel on desktop
+  if (!reducedMotion && !isTouchMobile) {
+    lenis = new Lenis({ lerp: 0.11, smoothWheel: true, wheelMultiplier: 0.9 });
   }
 
+  window.addEventListener("resize", markDirty, { passive: true });
   kick();
 
   return () => {
+    window.removeEventListener("resize", markDirty);
     stopLoop();
     lenis?.destroy();
     lenis = null;

@@ -71,16 +71,9 @@ html.lenis, html.lenis body { height: auto; }
 html.lenis.lenis-stopped { overflow: visible; }
 .lenis.lenis-smooth iframe { pointer-events: none; }
 
-/* Page open: the hero eases in (opacity only, so sticky / fixed children are untouched). */
-@keyframes ct-hero-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+/* Hero displays immediately on first paint (no initial blank/fade screen). */
 .ct-hero-in {
-  animation: ct-hero-in 1.8s cubic-bezier(0.22, 1, 0.36, 1) 0.2s backwards;
-}
-@media (prefers-reduced-motion: reduce) {
-  .ct-hero-in { animation: none; }
+  opacity: 1;
 }
 
 /* ═══ Back pill on inner pages (components/BackButton): top-right, where the old X was ═══ */

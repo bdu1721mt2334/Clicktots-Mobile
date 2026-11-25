@@ -33,6 +33,8 @@ export interface ScrollOverHeroProps {
    * Higher = longer, calmer rise.
    */
   rise?: number;
+  /** Extra scroll runway (in svh) reserved below the panel so a rocket flight can pin it with native CSS sticky. */
+  flightVh?: number;
   /** Background of the rising panel. Default white. */
   panelClassName?: string;
   id?: string;
@@ -49,12 +51,14 @@ export function ScrollOverHero({
   children,
   holdVh = 100,
   rise = 0.4,
+  flightVh = 0,
   panelClassName,
   id,
   className,
 }: ScrollOverHeroProps) {
   const reduced = useReducedMotion();
   const spacerRef = React.useRef<HTMLDivElement>(null);
+  const baseWrapRef = React.useRef<HTMLDivElement>(null);
   const k = Math.min(0.8, Math.max(0, rise));
 
   const progress = useMotionValue(0); // 0 → 1 over the rise
@@ -64,25 +68,64 @@ export function ScrollOverHero({
     if (reduced) return;
     const el = spacerRef.current;
     if (!el) return;
+    let vh = 0;
+    let lastP = -1;
+    let lastY = -1;
+    let baseHidden = false;
+
+    const measure = () => {
+      const spH = holdVh > 0 ? el.offsetHeight / (holdVh / 100) : 0;
+      const next = spH > 100 ? spH : baseWrapRef.current?.offsetHeight || window.innerHeight || 1;
+      if (Math.abs(next - vh) >= 1) {
+        vh = next;
+        lastP = -1;
+        lastY = -1;
+      }
+    };
+
     const update = () => {
-      const vh = window.innerHeight || 1;
+      if (!vh) measure();
       const dist = vh / (1 - k); // scroll distance of the whole rise
       // the spacer's bottom edge = where the panel would sit without any lag
       const s = Math.max(0, vh - scrollRect(el).bottom);
       const p = Math.min(1, s / dist);
-      progress.set(p);
-      panelY.set(k * dist * p);
+      const y = k * dist * p;
+      if (p !== lastP) {
+        lastP = p;
+        progress.set(p);
+      }
+      if (Math.abs(y - lastY) >= 0.05) {
+        lastY = y;
+        panelY.set(y);
+      }
+      const hideBase = p >= 0.999;
+      if (hideBase !== baseHidden && baseWrapRef.current) {
+        baseHidden = hideBase;
+        baseWrapRef.current.style.visibility = hideBase ? "hidden" : "";
+      }
     };
+
+    measure();
     update();
-    return onFrame(update);
-  }, [reduced, k, progress, panelY]);
+    const off = onFrame(update);
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
+    ro?.observe(el);
+    window.addEventListener("resize", measure, { passive: true });
+    return () => {
+      off();
+      ro?.disconnect();
+      window.removeEventListener("resize", measure);
+      if (baseWrapRef.current) baseWrapRef.current.style.visibility = "";
+    };
+  }, [reduced, k, holdVh, progress, panelY]);
 
   const panelScale = useTransform(progress, [0, 1], [PANEL_SCALE, 1]);
   const baseScale = useTransform(progress, [0, 1], [1, BASE_SCALE]);
   const baseRadius = useTransform(progress, [0, 1], [0, 28]);
-  const baseFilter = useTransform(progress, (v) =>
-    v < 0.004 ? "none" : `blur(${(v * BASE_BLUR).toFixed(2)}px)`,
-  );
+  const baseFilter = useTransform(progress, (v) => {
+    if (v < 0.004 || (typeof window !== "undefined" && window.innerWidth < 768)) return "none";
+    return `blur(${(v * BASE_BLUR).toFixed(2)}px)`;
+  });
   const dim = useTransform(progress, [0, 1], [0, BASE_DIM]);
 
   const panelBg = panelClassName ?? "bg-white";
@@ -93,6 +136,7 @@ export function ScrollOverHero({
     <div id={id} className={cn("relative w-full", className)}>
       {/* pinned layer */}
       <div
+        ref={baseWrapRef}
         className={cn(
           "relative z-0 min-h-[560px] bg-black",
           !reduced && "sticky top-0 h-screen-s",
@@ -124,12 +168,12 @@ export function ScrollOverHero({
 
       {/* HOLD: scroll distance during which the client section stays untouched */}
       {!reduced && (
-        <div ref={spacerRef} aria-hidden="true" style={{ height: `${holdVh}vh` }} />
+        <div ref={spacerRef} aria-hidden="true" style={{ height: `${holdVh}svh` }} />
       )}
 
       {/* rising panel. The wrapper is the handle the rocket journey grabs
-          (data-flight-panel): it pins the panel at its end, then flies it off
-          to the top-left corner. It adds no styles of its own. */}
+          (data-flight-panel): it pins natively via CSS sticky at its end, then flies off
+          to the top-left corner with zero scroll-counter jitter. */}
       <div data-flight-panel="" className="relative z-10">
         <motion.section
           aria-label="Testimonials"
@@ -142,7 +186,10 @@ export function ScrollOverHero({
           {children}
         </motion.section>
       </div>
-      {!reduced && <div aria-hidden="true" className={panelBg} style={{ height: tail }} />}
+      {!reduced && <div data-flight-tail="" aria-hidden="true" style={{ height: tail, pointerEvents: "none" }} />}
+      {!reduced && flightVh > 0 && (
+        <div aria-hidden="true" style={{ height: `${flightVh}svh`, pointerEvents: "none" }} />
+      )}
     </div>
   );
 }

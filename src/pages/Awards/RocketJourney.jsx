@@ -35,7 +35,7 @@ import { clamp, range, easeOutCubic } from "@/lib/math";
  *  Reduced motion: no flight at all, the sections simply stack.
  * ------------------------------------------------------------------ */
 
-const FLIGHT_VH = 320; // scroll length of the whole trip, in screens
+export const FLIGHT_VH = 320; // scroll length of the whole trip, in screens
 const INK = "#121110";
 /* The Earth texture (public/space/earth.webp) is built from a real Earth photo (Earth seen from space,
    India near the top). EARTH_PHOTO is the Earth's edge in that photo (pixels): the texture square is
@@ -166,6 +166,10 @@ export const SPACE_CSS = `
   background:radial-gradient(circle at 32% 28%,#a98467 0,#6a4c3a 38%,#2f2018 78%,#1a110c 100%);
   box-shadow:0 0 calc(var(--s)*.6) rgba(255,120,40,.85),inset -3px -3px 6px rgba(0,0,0,.55),inset 2px 2px 4px rgba(255,190,120,.35)}
 .ct-rock::after{content:"";position:absolute;left:24%;top:30%;width:24%;height:20%;border-radius:50%;background:rgba(20,10,6,.55);box-shadow:30px 16px 0 -2px rgba(20,10,6,.45)}
+@media (max-width:767px){
+  .ct-streak{filter:none}
+  .ct-tail,.ct-rock{display:none!important}
+}
 @media (prefers-reduced-motion:reduce){.ct-fly,.ct-rock{animation:none!important}}
 `;
 
@@ -201,8 +205,8 @@ export function RocketJourney({ children }) {
     const bdEl = bd.current;
     const stEl = st.current;
     const panel = holderEl?.querySelector("[data-flight-panel]");
+    const tailEl = holderEl?.querySelector("[data-flight-tail]");
     if (!holderEl || !bdEl || !stEl) return;
-    const container = panel ? panel.offsetParent : null;
 
     const G = { vw: 0, vh: 0, F: 1, L: 1, rs: 100, sx: 0, sy: 0, ex: 0, ey: 0, cx: 0, moonTop: 0, capH: 0, rMax: 0, H: 0, tail: 0, originY: 0 };
     let active = false;
@@ -212,7 +216,6 @@ export function RocketJourney({ children }) {
       const vw = stEl.offsetWidth;
       const vh = stEl.offsetHeight;
       if (!vw || !vh) return;
-      const small = vw < 768;
       G.vw = vw;
       G.vh = vh;
       G.F = (vh * FLIGHT_VH) / 100;
@@ -245,11 +248,14 @@ export function RocketJourney({ children }) {
       G.L = trail.current ? trail.current.getTotalLength() : 1;
       if (maskPath.current) maskPath.current.style.strokeDasharray = `${G.L} ${G.L}`;
 
-      // testimonial panel geometry (for pinning / flying it off)
-      if (panel && container) {
+      // Native CSS sticky pinning for the testimonial panel: locks on the browser compositor
+      // thread at the exact pixel Testimonials reaches the bottom of the viewport (zero JS jitter).
+      if (panel) {
         G.H = panel.offsetHeight;
-        G.tail = container.offsetHeight - (panel.offsetTop + panel.offsetHeight);
-        G.originY = G.H + G.tail - vh;
+        G.tail = tailEl ? tailEl.offsetHeight : (0.4 / 0.6) * vh;
+        G.originY = Math.max(0, G.H + G.tail - vh);
+        panel.style.position = "sticky";
+        panel.style.top = `${(vh - (G.H + G.tail)).toFixed(1)}px`;
       }
       if (rocket.current) rocket.current.style.width = rocket.current.style.height = `${G.rs}px`;
       if (hud.current) hud.current.style.display = vw < 560 ? "none" : "";
@@ -272,12 +278,11 @@ export function RocketJourney({ children }) {
       active = true;
       bdEl.style.visibility = "visible";
       stEl.style.visibility = "visible";
-      if (panel) panel.style.willChange = "transform, opacity";
     };
 
     const update = () => {
       if (!G.vh) return;
-      const f = clamp(G.vh - scrollRect(holderEl).bottom, 0, G.F);
+      const f = clamp(G.vh + G.F - scrollRect(holderEl).bottom, 0, G.F);
       if (f <= 0) {
         if (active) deactivate();
         return;
@@ -287,17 +292,24 @@ export function RocketJourney({ children }) {
       if (u === lastU) return;
       lastU = u;
 
-      /* ---- 1. testimonial section: pinned, then off to the top-left ---- */
+      /* ---- 1. testimonial section: natively sticky while rocket rises, then flies off to top-left ---- */
       const eRaw = range(u, 0.13, 0.5);
       const e = Math.pow(eRaw, 2.1);
       if (panel) {
         const s = panel.style;
-        if (e >= 1) {
+        if (e <= 0.0001) {
+          // Completely untouched while rocket rises (u = 0..0.13) — compositor sticky holds it rock solid.
+          if (s.transform || s.clipPath || s.opacity || s.visibility || s.willChange) {
+            s.transform = s.clipPath = s.opacity = s.visibility = s.transformOrigin = s.willChange = "";
+          }
+        } else if (e >= 1) {
           s.visibility = "hidden";
+          s.willChange = "";
         } else {
           s.visibility = "";
-          s.transformOrigin = `0px ${G.originY}px`;
-          s.transform = `translate3d(${(-G.vw * 0.95 * e).toFixed(2)}px,${(f - G.vh * 1.0 * e).toFixed(2)}px,0) rotate(${(-9 * e).toFixed(3)}deg) scale(${(1 - 0.7 * e).toFixed(4)})`;
+          s.willChange = "transform, opacity";
+          s.transformOrigin = `0px ${G.originY.toFixed(1)}px`;
+          s.transform = `translate3d(${(-G.vw * 0.95 * e).toFixed(2)}px,${(-G.vh * 1.0 * e).toFixed(2)}px,0) rotate(${(-9 * e).toFixed(3)}deg) scale(${(1 - 0.7 * e).toFixed(4)})`;
           s.clipPath = `inset(${G.originY.toFixed(1)}px 0px ${(-G.tail).toFixed(1)}px 0px round ${(26 + 14 * e).toFixed(1)}px)`;
           s.opacity = String(1 - range(e, 0.72, 1));
         }
@@ -345,20 +357,36 @@ export function RocketJourney({ children }) {
 
     let ro;
     const relayout = () => {
+      const nextVw = stEl.offsetWidth;
+      const nextVh = stEl.offsetHeight;
+      const nextH = panel ? panel.offsetHeight : 0;
+      const nextTail = tailEl ? tailEl.offsetHeight : 0;
+      if (
+        Math.abs(nextVw - G.vw) < 1 &&
+        Math.abs(nextVh - G.vh) < 1 &&
+        Math.abs(nextH - G.H) < 1 &&
+        Math.abs(nextTail - G.tail) < 1
+      ) {
+        return;
+      }
       layout();
       update();
     };
-    window.addEventListener("resize", relayout);
+    window.addEventListener("resize", relayout, { passive: true });
     if (typeof ResizeObserver !== "undefined") {
       ro = new ResizeObserver(relayout);
       if (panel) ro.observe(panel);
-      if (container) ro.observe(container);
+      ro.observe(stEl);
     }
     return () => {
       off();
       window.removeEventListener("resize", relayout);
       ro?.disconnect();
       deactivate();
+      if (panel) {
+        panel.style.position = "";
+        panel.style.top = "";
+      }
     };
   }, [reduced]);
 
@@ -387,7 +415,7 @@ export function RocketJourney({ children }) {
             gridTemplateRows: "minmax(0,1fr)",
             width: "100%",
             height: `calc(${100 + FLIGHT_VH}svh)`,
-            marginTop: "-100svh",
+            marginTop: `calc(-${100 + FLIGHT_VH}svh)`,
             pointerEvents: "none",
           }}
         >

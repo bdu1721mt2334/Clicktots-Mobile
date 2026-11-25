@@ -41,6 +41,15 @@ h1, h2, h3, h4,
     translate 0.9s cubic-bezier(0.22, 1, 0.36, 1) var(--ct-d, 0ms),
     filter 0.9s cubic-bezier(0.22, 1, 0.36, 1) var(--ct-d, 0ms);
 }
+@media (max-width: 1023px), (pointer: coarse) {
+  .ct-fade { filter: none; }
+  .ct-fade.ct-in {
+    filter: none;
+    transition:
+      opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1) var(--ct-d, 0ms),
+      translate 0.6s cubic-bezier(0.22, 1, 0.36, 1) var(--ct-d, 0ms);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .ct-fade { opacity: 1; translate: none; filter: none; }
 }

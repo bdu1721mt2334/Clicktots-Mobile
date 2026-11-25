@@ -44,10 +44,10 @@ const SERVICE_ICONS = {
 const DROP_EASE = [0.22, 1, 0.36, 1];
 // opacity + transform only: a CSS filter here (even blur(0)) sits on the parent of the glass bar's
 // backdrop-filter and forces the browser to re-paint it every frame → the whole site felt slow
-const drop = (revealed, delay) => ({
-  initial: { opacity: 0, y: -46 },
+const drop = (revealed) => ({
+  initial: false,
   animate: revealed ? { opacity: 1, y: 0 } : { opacity: 0, y: -46 },
-  transition: { duration: 1.05, ease: DROP_EASE, delay },
+  transition: { duration: 0.35, ease: DROP_EASE },
 });
 
 /* Hide on scroll-down, show on scroll-up (home page only: inner pages cover the navbar). Small per-frame
@@ -449,6 +449,7 @@ export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, 
   // it falls back to plain frosted blur; the refraction returns 160 ms after scrolling stops.
   const headerRef = useRef(null);
   useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 1024) return undefined;
     let t = 0;
     let on = false;
     let last = getScrollY();
@@ -552,7 +553,10 @@ export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, 
                 id="nav-logo-img"
                 src="/assets/clicktots-logo.webp"
                 alt="Clicktots Technologies"
-                className="h-8 sm:h-10 w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)]"
+                width={120}
+                height={40}
+                decoding="sync"
+                className="h-8 sm:h-10 w-auto object-contain lg:drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)]"
               />
             </a>
           </motion.div>
@@ -630,7 +634,7 @@ export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, 
             aria-label="Open navigation menu"
             aria-expanded={mobileMenuOpen}
             onClick={() => setMobileMenuOpen(true)}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_8px_24px_-8px_rgba(0,0,0,0.6)] backdrop-blur-xl backdrop-saturate-150 transition-colors hover:bg-white/20 cursor-pointer"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-[#0c111b]/85 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_6px_18px_-6px_rgba(0,0,0,0.6)] transition-colors hover:bg-[#162032]/90 cursor-pointer"
           >
             <Menu className="h-5 w-5" />
           </button>

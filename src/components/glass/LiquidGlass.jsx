@@ -35,12 +35,15 @@ export function useGlassEnv() {
     const rm = mm("(prefers-reduced-motion: reduce)");
     const rt = mm("(prefers-reduced-transparency: reduce)");
     const hc = mm("(prefers-contrast: more)");
-    const read = () =>
+    const read = () => {
+      const isMobileOrTouch =
+        window.innerWidth < 1024 || window.matchMedia("(pointer: coarse)").matches;
       setEnv({
-        refraction: detectChromium() && !rt.matches && !hc.matches,
+        refraction: !isMobileOrTouch && detectChromium() && !rt.matches && !hc.matches,
         reducedMotion: rm.matches,
         reducedTransparency: rt.matches || hc.matches,
       });
+    };
     read();
     [rm, rt, hc].forEach((q) => q.addEventListener?.("change", read));
     return () => [rm, rt, hc].forEach((q) => q.removeEventListener?.("change", read));

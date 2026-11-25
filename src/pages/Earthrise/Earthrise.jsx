@@ -1,18 +1,15 @@
-// Purpose: Implement the Earthrise pages module, keeping this responsibility separate for maintainability.
+// Purpose: Implement the Earthrise hero module with instant first paint and 120fps scroll parallax.
 import { useEffect, useRef } from 'react';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { clamp, easeOutCubic, lerp, pinProgress, range } from '@/lib/math';
 import { onFrame } from '@/lib/scroll';
 
-const STAGE_VH = 440;
+const STAGE_VH = 400;
 
-// Act I · Signal in the Noise — the dust is market noise; scrolling clears it.
 const hero = {
   line1: 'Growth starts with an',
   line2: 'Intelligent Click', // must end with "Click" (the animated brand mark)
   subhead: 'Where human creativity meets predictive AI marketing',
-  kicker: 'AI-powered digital marketing agency · Chennai',
-  prompt: 'Scroll to clear the market noise',
   site: 'Mare Tranquillitatis · 0.67°N 23.47°E',
   signal: 'Signal lock · 99.4%',
 };
@@ -20,15 +17,16 @@ const hero = {
 const BRAND_LETTERS = ['C', 'l', 'i', 'c', 'k'];
 
 const ORDER = ['sky', 'earth', 'moonscape', 'frame', 'astronaut', 'ground'];
+const ABOVE_FOLD = new Set(['sky', 'earth', 'moonscape']);
 
 const FIT = 'absolute inset-0 size-full object-cover object-[58%_50%] md:object-center';
 
 export function Earthrise() {
   const rootRef = useRef(null);
   const layerRefs = useRef({});
-  const veilRef = useRef(null);
-  const dustRef = useRef(null);
   const titleRef = useRef(null);
+  const word1Ref = useRef(null);
+  const word2Ref = useRef(null);
   const hudRef = useRef(null);
   const clockRef = useRef(null);
   const elevRef = useRef(null);
@@ -41,15 +39,17 @@ export function Earthrise() {
   const clickGlowRef = useRef(null);
 
   const sparksRef = useRef([]);
+  const sparksDirtyRef = useRef(false);
   const burstFiredRef = useRef(false);
   const clickImpulseRef = useRef(0);
   const hoverStateRef = useRef({ active: false, nx: 0, ny: 0 });
+  const hoverDirtyRef = useRef(false);
 
   const reduced = useReducedMotion();
   const reducedRef = useRef(reduced);
   reducedRef.current = reduced;
 
-  const spawnBurst = (originX = 0.5, originY = 0.5, count = 44) => {
+  const spawnBurst = (originX = 0.5, originY = 0.5, count = 36) => {
     if (reducedRef.current) return;
     const canvas = clickCanvasRef.current;
     if (!canvas) return;
@@ -75,6 +75,7 @@ export function Earthrise() {
         color: palette[i % palette.length],
       });
     }
+    sparksDirtyRef.current = true;
   };
 
   const handleClickBrand = (e) => {
@@ -83,9 +84,9 @@ export function Earthrise() {
       const rect = canvas.getBoundingClientRect();
       const ox = clamp((e.clientX - rect.left) / Math.max(1, rect.width), 0.15, 0.85);
       const oy = clamp((e.clientY - rect.top) / Math.max(1, rect.height), 0.2, 0.8);
-      spawnBurst(ox, oy, 48);
+      spawnBurst(ox, oy, 42);
     } else {
-      spawnBurst(0.5, 0.5, 48);
+      spawnBurst(0.5, 0.5, 42);
     }
     clickImpulseRef.current = 1;
   };
@@ -98,300 +99,249 @@ export function Earthrise() {
     const nx = clamp(((e.clientX - rect.left) / Math.max(1, rect.width) - 0.5) * 2, -1, 1);
     const ny = clamp(((e.clientY - rect.top) / Math.max(1, rect.height) - 0.5) * 2, -1, 1);
     hoverStateRef.current = { active: true, nx, ny };
+    hoverDirtyRef.current = true;
     el.style.setProperty('--mx', `${((nx + 1) * 50).toFixed(1)}%`);
     el.style.setProperty('--my', `${((ny + 1) * 50).toFixed(1)}%`);
   };
 
   const handlePointerLeave = () => {
     hoverStateRef.current = { active: false, nx: 0, ny: 0 };
+    hoverDirtyRef.current = true;
   };
 
-  // Sync dust + Click FX canvas resolutions.
+  // Sync Click FX canvas resolution only when resized.
   useEffect(() => {
-    const targets = [dustRef.current, clickCanvasRef.current].filter(Boolean);
-    if (!targets.length) return;
+    const c = clickCanvasRef.current;
+    if (!c) return;
     const sync = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      for (const c of targets) {
-        c.width = Math.round(c.clientWidth * dpr);
-        c.height = Math.round(c.clientHeight * dpr);
-      }
+      c.width = Math.round(c.clientWidth * dpr);
+      c.height = Math.round(c.clientHeight * dpr);
     };
     sync();
     const ro = new ResizeObserver(sync);
-    for (const c of targets) ro.observe(c);
+    ro.observe(c);
     return () => ro.disconnect();
   }, []);
 
   useEffect(() => {
-    const canvas = dustRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    let seed = 11;
-    const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-    const motes = Array.from({length: 140}, () => ({x: rand(), y: rand(), r: 0.4 + rand() * 1.6, s: 0.3 + rand(), a: 0.2 + rand() * 0.6}));
     let lastP = -1;
     let lastTime = 0;
+    let fxCtx = null;
 
     const set = (name, y, scale = 1, opacity = 1) => {
       const el = layerRefs.current[name];
       if (!el) return;
-      el.style.transform = `translate3d(0, ${y}vh, 0) scale(${scale})`;
-      el.style.opacity = String(opacity);
+      el.style.transform = `translate3d(0, ${y.toFixed(3)}vh, 0) scale(${scale.toFixed(4)})`;
+      el.style.opacity = opacity === 1 ? '1' : opacity.toFixed(3);
     };
 
-    return onFrame((time) => {
-      const dt = lastTime ? Math.min(0.1, (time - lastTime) / 1000) : 1 / 60;
-      lastTime = time;
-      const root = rootRef.current;
-      if (!root) return;
-      const {p, rect} = pinProgress(root);
-      if (rect.bottom < 0) return;
+    const applyInitial = (p) => {
+      const exit = range(p, 0.68, 1);
+      const settle = easeOutCubic(range(p, 0, 0.48));
 
-      // Dust drifts every frame while it's visible.
-      const veil = 1 - range(p, 0, 0.18);
-      if (veil > 0.001) {
-        const w = canvas.clientWidth;
-        const h = canvas.clientHeight;
-        const dpr = canvas.width / Math.max(1, w);
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.clearRect(0, 0, w, h);
-        ctx.fillStyle = '#dfe6f2';
-        for (const m of motes) {
-          if (!reducedRef.current) {
-            m.x += 0.006 * m.s * dt;
-            m.y -= 0.004 * m.s * dt;
-            if (m.x > 1) m.x -= 1;
-            if (m.y < 0) m.y += 1;
-          }
-          ctx.globalAlpha = m.a * veil;
-          ctx.beginPath();
-          ctx.arc(m.x * w, (m.y - p * 0.6) * h, m.r * (1 + p * 4), 0, Math.PI * 2);
-          ctx.fill();
-        }
-        ctx.globalAlpha = 1;
-      }
+      // Above-the-fold layers start crisp & visible immediately (no empty/foggy beginning screen)
+      set('sky', lerp(0, -6, p), lerp(1.08, 1, settle), 1);
+      const rise = easeOutCubic(range(p, 0, 0.48));
+      set('earth', lerp(10, 0, rise) - exit * 12, lerp(0.95, 1, rise), 1);
+      set('moonscape', lerp(3, 0, settle) - exit * 26, 1, 1);
 
-      // Render live "Click" spark particle physics every frame
-      const fxCanvas = clickCanvasRef.current;
-      if (fxCanvas) {
-        const fxCtx = fxCanvas.getContext('2d');
-        if (fxCtx) {
-          const fw = fxCanvas.clientWidth;
-          const fh = fxCanvas.clientHeight;
-          const dpr = fxCanvas.width / Math.max(1, fw);
-          fxCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-          fxCtx.clearRect(0, 0, fw, fh);
-
-          const sparks = sparksRef.current;
-          for (let i = sparks.length - 1; i >= 0; i--) {
-            const s = sparks[i];
-            s.x += s.vx * (dt * 60);
-            s.y += s.vy * (dt * 60);
-            s.vx *= 0.935;
-            s.vy = s.vy * 0.935 - 0.02;
-            s.alpha -= s.decay * (dt * 60);
-            if (s.alpha <= 0.01) {
-              sparks.splice(i, 1);
-              continue;
-            }
-            fxCtx.globalAlpha = s.alpha;
-            fxCtx.fillStyle = s.color;
-            fxCtx.beginPath();
-            fxCtx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-            fxCtx.fill();
-          }
-          fxCtx.globalAlpha = 1;
-        }
-      }
-
-      // Smoothly decay interactive click impulse + drive magnetic hover on "Click"
-      if (clickImpulseRef.current > 0.001) {
-        clickImpulseRef.current *= Math.pow(0.06, dt);
-      } else {
-        clickImpulseRef.current = 0;
-      }
-
-      const snapT = range(p, 0.25, 0.34);
-      let scrollPress = 0;
-      if (!reducedRef.current && snapT > 0 && snapT < 1) {
-        if (snapT < 0.28) {
-          scrollPress = lerp(0, -0.09, easeOutCubic(snapT / 0.28));
-        } else if (snapT < 0.65) {
-          scrollPress = lerp(-0.09, 0.07, easeOutCubic((snapT - 0.28) / 0.37));
-        } else {
-          scrollPress = lerp(0.07, 0, easeOutCubic((snapT - 0.65) / 0.35));
-        }
-      }
-
-      const impulsePress = -Math.sin(clickImpulseRef.current * Math.PI) * 0.1;
-      if (clickBrandRef.current) {
-        const s = 1 + scrollPress + impulsePress;
-        const y = -(scrollPress + impulsePress) * 28;
-        clickBrandRef.current.style.transform = `translate3d(0, ${y}px, 0) scale(${s})`;
-      }
-
-      // Per-letter 3D slot-reel reveal + cursor magnetic tilt
-      BRAND_LETTERS.forEach((_, idx) => {
-        const el = clickLetterRefs.current[idx];
-        if (!el) return;
-        if (reducedRef.current) {
-          el.style.transform = 'none';
-          el.style.filter = 'none';
-          return;
-        }
-
-        const start = 0.12 + idx * 0.018;
-        const reelT = easeOutCubic(range(p, start, start + 0.12));
-        const reelY = lerp(52, 0, reelT);
-        const reelRotX = lerp(-85, 0, reelT);
-        const reelScale = lerp(0.8, 1, reelT);
-
-        const hover = hoverStateRef.current;
-        const charCenter = (idx - 2) / 2;
-        const proximity = hover.active ? Math.max(0, 1 - Math.abs(hover.nx - charCenter) * 0.65) : 0;
-        const hoverY = -proximity * 6;
-        const hoverRotY = hover.active ? (hover.nx - charCenter) * 14 : 0;
-        const hoverRotX = hover.active ? -hover.ny * 12 : 0;
-
-        el.style.transform = `translate3d(0, ${reelY + hoverY}px, 0) rotateX(${reelRotX + hoverRotX}deg) rotateY(${hoverRotY}deg) scale(${reelScale + proximity * 0.06})`;
-        el.style.filter = `blur(${(1 - reelT) * 9}px)`;
-      });
-
-      if (Math.abs(p - lastP) < 0.00005) return;
-      lastP = p;
-
-      const exit = range(p, 0.7, 1);
-      const settle = easeOutCubic(range(p, 0, 0.5));
-
-      // Veil clears upward.
-      if (veilRef.current) {
-        veilRef.current.style.opacity = String(veil);
-        veilRef.current.style.transform = `translate3d(0, ${-range(p, 0, 0.18) * 24}vh, 0) scale(${1 + range(p, 0, 0.18) * 0.25})`;
-      }
-      if (canvas) {
-        canvas.style.opacity = String(veil);
-      }
-
-      // Far → near layers.
-      set('sky', lerp(0, -6, p), lerp(1.14, 1, settle));
-      const rise = easeOutCubic(range(p, 0.04, 0.5));
-      set('earth', lerp(34, 0, rise) - exit * 12, lerp(0.92, 1, rise));
-      set('moonscape', lerp(9, 0, settle) - exit * 26);
-      const rim = easeOutCubic(range(p, 0.28, 0.58));
+      const rim = easeOutCubic(range(p, 0.24, 0.54));
       set('frame', -exit * 44, lerp(1.6, 1, rim), rim);
-      const up = easeOutCubic(range(p, 0.36, 0.62));
+      const up = easeOutCubic(range(p, 0.32, 0.58));
       set('astronaut', lerp(28, 0, up) - exit * 58, 1, clamp(up * 2));
-      const ground = easeOutCubic(range(p, 0.34, 0.6));
-      set('ground', lerp(36, 0, ground) - exit * 78);
+      const ground = easeOutCubic(range(p, 0.30, 0.56));
+      set('ground', lerp(36, 0, ground) - exit * 78, 1, 1);
 
-      // Fire particle burst when scroll hits the Click lock moment
-      if (p >= 0.255 && !burstFiredRef.current) {
+      if (p >= 0.18 && !burstFiredRef.current) {
         burstFiredRef.current = true;
-        spawnBurst(0.5, 0.52, 42);
-      } else if (p < 0.2) {
+        spawnBurst(0.5, 0.52, 34);
+      } else if (p < 0.12) {
         burstFiredRef.current = false;
       }
 
-      // --- UNIQUE GSAP-STYLE STAGGERED CINEMATIC TEXT REVEAL ---
-      const tIn = easeOutCubic(range(p, 0.08, 0.24));
-      const tOut = range(p, 0.42, 0.52);
+      // Hero headline is immediately visible at p = 0 and smoothly exits as astronaut rises
+      const tOut = range(p, 0.36, 0.48);
       const title = titleRef.current;
-
       if (title) {
-        title.style.opacity = String(tIn * (1 - tOut));
-        title.style.transform = `translate3d(0, ${-p * 6}vh, 0)`;
-
-        const word1 = title.querySelector('.title-word-1');
-        const word2 = title.querySelector('.title-word-2');
-
-        const progress1 = easeOutCubic(range(p, 0.08, 0.20));
-        const progress2 = easeOutCubic(range(p, 0.12, 0.24));
-
-        if (word1) {
-          word1.style.transform = reducedRef.current
-            ? 'none'
-            : `translate3d(0, ${lerp(45, 0, progress1)}px, 0) rotateX(${lerp(-25, 0, progress1)}deg)`;
-          word1.style.filter = reducedRef.current ? 'none' : `blur(${(1 - progress1) * 10}px)`;
-        }
-
-        if (word2) {
-          word2.style.transform = reducedRef.current
-            ? 'none'
-            : `translate3d(0, ${lerp(45, 0, progress2)}px, 0) rotateX(${lerp(-25, 0, progress2)}deg)`;
-          word2.style.filter = reducedRef.current ? 'none' : `blur(${(1 - progress2) * 10}px)`;
-        }
-
-        // Specular horizon blade & ambient aura behind "Click"
+        title.style.opacity = String((1 - tOut).toFixed(3));
+        title.style.transform = `translate3d(0, ${(-p * 6).toFixed(3)}vh, 0)`;
+        if (word1Ref.current) word1Ref.current.style.transform = 'none';
+        if (word2Ref.current) word2Ref.current.style.transform = 'none';
         if (clickBladeRef.current) {
-          const bladeT = easeOutCubic(range(p, 0.25, 0.36));
-          clickBladeRef.current.style.transform = `scaleX(${bladeT})`;
-          clickBladeRef.current.style.opacity = String(bladeT * 0.9);
+          const bladeT = 0.85 + 0.15 * easeOutCubic(range(p, 0, 0.22));
+          clickBladeRef.current.style.transform = `scaleX(${bladeT.toFixed(3)})`;
+          clickBladeRef.current.style.opacity = String(((1 - tOut) * 0.9).toFixed(3));
         }
-
         if (clickGlowRef.current) {
-          const glowT = easeOutCubic(range(p, 0.24, 0.35));
-          clickGlowRef.current.style.opacity = String(glowT * 0.75);
-          clickGlowRef.current.style.transform = `scale(${lerp(0.7, 1.08, glowT)})`;
+          const glowT = 0.7 + 0.3 * easeOutCubic(range(p, 0, 0.22));
+          clickGlowRef.current.style.opacity = String((glowT * 0.75 * (1 - tOut)).toFixed(3));
+          clickGlowRef.current.style.transform = `scale(${lerp(0.95, 1.08, glowT).toFixed(3)})`;
         }
       }
 
-      // Telemetry HUD.
+      // Telemetry HUD visible right away, fades out on exit
       if (hudRef.current) {
-        hudRef.current.style.opacity = String(range(p, 0.02, 0.1) * (1 - range(p, 0.62, 0.72)));
+        hudRef.current.style.opacity = String((1 - range(p, 0.6, 0.7)).toFixed(3));
       }
       const secs = p * 5400;
       if (clockRef.current) {
         clockRef.current.textContent = `T+ ${String(Math.floor(secs / 3600)).padStart(2, '0')}:${String(Math.floor((secs % 3600) / 60)).padStart(2, '0')}:${String(Math.floor(secs % 60)).padStart(2, '0')}`;
       }
       if (elevRef.current) {
-        elevRef.current.textContent = `${(rise * 12.5).toFixed(1)}°`;
+        elevRef.current.textContent = `${(4.2 + rise * 8.3).toFixed(1)}°`;
       }
+    };
+
+    // Paint initial frame immediately so there is zero flash on mount
+    applyInitial(0);
+
+    return onFrame((time) => {
+      const dt = lastTime ? Math.min(0.05, (time - lastTime) / 1000) : 1 / 60;
+      lastTime = time;
+      const root = rootRef.current;
+      if (!root) return;
+      const { p, rect } = pinProgress(root);
+      if (rect.bottom < 0) return;
+
+      // Render "Click" spark particle physics ONLY when sparks are active
+      const sparks = sparksRef.current;
+      if (sparks.length > 0 || sparksDirtyRef.current) {
+        const fxCanvas = clickCanvasRef.current;
+        if (fxCanvas) {
+          if (!fxCtx) fxCtx = fxCanvas.getContext('2d');
+          if (fxCtx) {
+            const fw = fxCanvas.clientWidth;
+            const fh = fxCanvas.clientHeight;
+            const dpr = fxCanvas.width / Math.max(1, fw);
+            fxCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            fxCtx.clearRect(0, 0, fw, fh);
+
+            for (let i = sparks.length - 1; i >= 0; i--) {
+              const s = sparks[i];
+              s.x += s.vx * (dt * 60);
+              s.y += s.vy * (dt * 60);
+              s.vx *= 0.935;
+              s.vy = s.vy * 0.935 - 0.02;
+              s.alpha -= s.decay * (dt * 60);
+              if (s.alpha <= 0.01) {
+                sparks.splice(i, 1);
+                continue;
+              }
+              fxCtx.globalAlpha = s.alpha;
+              fxCtx.fillStyle = s.color;
+              fxCtx.beginPath();
+              fxCtx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+              fxCtx.fill();
+            }
+            fxCtx.globalAlpha = 1;
+            if (sparks.length === 0) sparksDirtyRef.current = false;
+          }
+        }
+      }
+
+      const pChanged = Math.abs(p - lastP) >= 0.00005;
+      const hadImpulse = clickImpulseRef.current > 0.001;
+      if (hadImpulse) {
+        clickImpulseRef.current *= Math.pow(0.06, dt);
+        if (clickImpulseRef.current <= 0.001) clickImpulseRef.current = 0;
+      }
+
+      if (pChanged || hadImpulse) {
+        const snapT = range(p, 0.17, 0.27);
+        let scrollPress = 0;
+        if (!reducedRef.current && snapT > 0 && snapT < 1) {
+          if (snapT < 0.28) scrollPress = lerp(0, -0.09, easeOutCubic(snapT / 0.28));
+          else if (snapT < 0.65) scrollPress = lerp(-0.09, 0.07, easeOutCubic((snapT - 0.28) / 0.37));
+          else scrollPress = lerp(0.07, 0, easeOutCubic((snapT - 0.65) / 0.35));
+        }
+
+        const impulsePress = -Math.sin(clickImpulseRef.current * Math.PI) * 0.1;
+        if (clickBrandRef.current) {
+          const s = 1 + scrollPress + impulsePress;
+          const y = -(scrollPress + impulsePress) * 28;
+          clickBrandRef.current.style.transform =
+            Math.abs(s - 1) < 0.0002 && Math.abs(y) < 0.05
+              ? 'none'
+              : `translate3d(0, ${y.toFixed(2)}px, 0) scale(${s.toFixed(4)})`;
+        }
+      }
+
+      // Per-letter magnetic hover tilt (only write when hover state changes)
+      if (hoverDirtyRef.current) {
+        hoverDirtyRef.current = false;
+        const hover = hoverStateRef.current;
+        BRAND_LETTERS.forEach((_, idx) => {
+          const el = clickLetterRefs.current[idx];
+          if (!el) return;
+          if (reducedRef.current || !hover.active) {
+            el.style.transform = 'none';
+            return;
+          }
+          const charCenter = (idx - 2) / 2;
+          const proximity = Math.max(0, 1 - Math.abs(hover.nx - charCenter) * 0.65);
+          const hoverY = -proximity * 6;
+          const hoverRotY = (hover.nx - charCenter) * 14;
+          const hoverRotX = -hover.ny * 12;
+          el.style.transform = `translate3d(0, ${hoverY.toFixed(2)}px, 0) rotateX(${hoverRotX.toFixed(2)}deg) rotateY(${hoverRotY.toFixed(2)}deg) scale(${(1 + proximity * 0.06).toFixed(4)})`;
+        });
+      }
+
+      if (!pChanged) return;
+      lastP = p;
+      applyInitial(p);
     });
   }, []);
 
   const line2Prefix = hero.line2.replace(/Click$/, '');
 
-  const layer = (name, extra = '') => (
-    <div
-      key={name}
-      ref={(el) => {
-        if (el) layerRefs.current[name] = el;
-      }}
-      className={`absolute inset-0 will-change-transform ${extra}`}
-    >
-      <picture>
-        <source media="(max-width: 767px)" srcSet={`/layers/m/${name}.webp`} />
-        <img src={`/layers/d/${name}.webp`} alt="" aria-hidden="true" className={FIT} decoding="async" fetchPriority={name === 'sky' ? 'high' : 'low'} />
-      </picture>
-      {name === 'ground' && <div className="absolute inset-x-0 top-full h-[110vh] bg-black" />}
-    </div>
-  );
+  const layer = (name, extra = '') => {
+    const isInitial = ABOVE_FOLD.has(name);
+    return (
+      <div
+        key={name}
+        ref={(el) => {
+          if (el) layerRefs.current[name] = el;
+        }}
+        className={`absolute inset-0 will-change-transform ${extra}`}
+        style={isInitial ? undefined : { opacity: 0 }}
+      >
+        <picture>
+          <source media="(max-width: 767px)" srcSet={`/layers/m/${name}.webp`} />
+          <img
+            src={`/layers/d/${name}.webp`}
+            alt=""
+            aria-hidden="true"
+            width={1280}
+            height={724}
+            className={FIT}
+            decoding={isInitial ? 'sync' : 'async'}
+            fetchPriority={name === 'moonscape' || name === 'sky' ? 'high' : isInitial ? 'auto' : 'low'}
+            loading={isInitial ? 'eager' : 'lazy'}
+          />
+        </picture>
+        {name === 'ground' && <div className="absolute inset-x-0 top-full h-[110vh] bg-black" />}
+      </div>
+    );
+  };
 
   return (
-    <section id="top" ref={rootRef} aria-label="Earthrise" className="relative" style={{height: `${STAGE_VH}svh`}}>
+    <section id="top" ref={rootRef} aria-label="Earthrise" className="relative" style={{ height: `${STAGE_VH}svh` }}>
       <style>{`
-        @keyframes clickChromeSweep {
-          0%, 18% { background-position: 180% 50%; }
-          58%, 100% { background-position: -80% 50%; }
-        }
         .click-chrome-glyph {
           background-image:
             radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, 1) 0%, rgba(186, 230, 253, 0.92) 32%, transparent 65%),
             linear-gradient(112deg, #e2e8f0 0%, #ffffff 30%, #7dd3fc 46%, #ffffff 52%, #93c5fd 65%, #f8fafc 100%);
-          background-size: 100% 100%, 240% 100%;
-          background-position: center, 180% 50%;
+          background-size: 100% 100%, 100% 100%;
+          background-position: center, center;
           -webkit-background-clip: text;
           background-clip: text;
           color: transparent;
-          text-shadow: none; /* the h1's shadow would paint over the gradient letters */
-          filter: drop-shadow(0 6px 24px rgba(56, 189, 248, 0.28));
-          animation: clickChromeSweep 4.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+          text-shadow: none;
         }
-        @media (prefers-reduced-motion: reduce) {
+        @media (min-width: 1024px) {
           .click-chrome-glyph {
-            animation: none;
-            background-position: center, 50% 50%;
+            filter: drop-shadow(0 6px 24px rgba(56, 189, 248, 0.28));
           }
         }
       `}</style>
@@ -399,21 +349,35 @@ export function Earthrise() {
       <div className="sticky top-0 h-screen-s overflow-hidden bg-void">
         {ORDER.slice(0, 3).map((n) => layer(n))}
 
-        {/* Unique Staggered Split-Line Title Reveal + Live Physics "Click" Logo */}
-        <div ref={titleRef} className="pointer-events-none absolute inset-x-0 top-[26%] px-3 sm:px-6 text-center md:top-[30%]" style={{opacity: 0, perspective: '1000px'}}>
-          {/* soft dark halo behind the words only – keeps them readable over the bright clouds */}
-          <span aria-hidden="true" className="absolute top-1/2 left-1/2 -z-10 h-[150%] w-[min(92vw,1100px)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(2_8_20/0.55),rgb(2_8_20/0.25)_55%,transparent)] blur-2xl" />
-          <h1 className="ct-hero-title font-hero font-normal text-white [text-shadow:0_0_1px_rgb(0_0_0/0.9),0_1px_3px_rgb(0_0_0/0.75),0_2px_12px_rgb(0_6_18/0.7),0_6px_40px_rgb(0_6_18/0.6)]" style={{fontSize: 'clamp(1rem, 3.8vw, 4rem)', lineHeight: 1.15}}>
+        {/* Hero Headline + Live Physics "Click" Logo — immediately visible on first paint */}
+        <div
+          ref={titleRef}
+          className="pointer-events-none absolute inset-x-0 top-[26%] px-3 sm:px-6 text-center md:top-[30%]"
+          style={{ opacity: 1, perspective: '1000px' }}
+        >
+          {/* soft dark halo behind the words only – pure radial gradient (no GPU blur filter) */}
+          <span
+            aria-hidden="true"
+            className="absolute top-1/2 left-1/2 -z-10 h-[180%] w-[min(96vw,1160px)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(2_8_20/0.58),rgb(2_8_20/0.24)_58%,transparent)]"
+          />
+          <h1
+            className="ct-hero-title font-hero font-normal text-white [text-shadow:0_0_1px_rgb(0_0_0/0.9),0_1px_3px_rgb(0_0_0/0.75),0_2px_12px_rgb(0_6_18/0.7),0_6px_40px_rgb(0_6_18/0.6)]"
+            style={{ fontSize: 'clamp(1rem, 3.8vw, 4rem)', lineHeight: 1.15 }}
+          >
             <span className="block overflow-hidden pb-1">
-              <span className="title-word-1 inline-block will-change-transform">{hero.line1}</span>
+              <span ref={word1Ref} className="title-word-1 inline-block will-change-transform">
+                {hero.line1}
+              </span>
             </span>
 
             <span className="block pb-2">
               <span className="inline-block overflow-hidden align-baseline pb-1">
-                <span className="title-word-2 inline-block will-change-transform">{line2Prefix}</span>
+                <span ref={word2Ref} className="title-word-2 inline-block will-change-transform">
+                  {line2Prefix}
+                </span>
               </span>
 
-              {/* Interactive 3D Slot-Reel + Particle-Burst "Click" Brand Mark */}
+              {/* Interactive Particle-Burst "Click" Brand Mark */}
               <span
                 ref={clickBrandRef}
                 onPointerMove={handlePointerMove}
@@ -424,83 +388,67 @@ export function Earthrise() {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    spawnBurst(0.5, 0.5, 48);
+                    spawnBurst(0.5, 0.5, 42);
                     clickImpulseRef.current = 1;
                   }
                 }}
                 aria-label="Click brand mark"
                 className="pointer-events-auto relative ml-[0.14em] inline-flex cursor-pointer items-baseline select-none will-change-transform focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300"
-                style={{perspective: '900px'}}
+                style={{ perspective: '900px' }}
               >
-                {/* Live physics particle burst canvas */}
                 <canvas
                   ref={clickCanvasRef}
                   aria-hidden="true"
                   className="pointer-events-none absolute top-1/2 left-1/2 -z-10 h-[340%] w-[280%] -translate-x-1/2 -translate-y-1/2"
                 />
 
-                {/* Soft volumetric glow behind the wordmark */}
                 <span
                   ref={clickGlowRef}
                   aria-hidden="true"
-                  className="pointer-events-none absolute -inset-x-[0.25em] inset-y-[0.05em] -z-20 rounded-full bg-sky-400/25 blur-2xl"
-                  style={{opacity: 0}}
+                  className="pointer-events-none absolute -inset-x-[0.35em] -inset-y-[0.15em] -z-20 rounded-full bg-[radial-gradient(closest-side,rgba(56,189,248,0.32),rgba(56,189,248,0.1)_55%,transparent)]"
+                  style={{ opacity: 0.55 }}
                 />
 
-                {/* 3D rolling letters (the wrapper adds a dark outline so they read over bright clouds) */}
-                <span className="inline-flex items-baseline [filter:drop-shadow(0_0_1px_rgb(0_0_0/0.85))_drop-shadow(0_2px_6px_rgb(0_6_18/0.7))]" style={{perspective: '900px'}}>
-                {BRAND_LETTERS.map((char, idx) => (
-                  <span
-                    key={idx}
-                    ref={(el) => {
-                      clickLetterRefs.current[idx] = el;
-                    }}
-                    className="click-chrome-glyph inline-block font-extrabold tracking-[-0.03em] will-change-transform"
-                  >
-                    {char}
-                  </span>
-                ))}
+                <span
+                  className="inline-flex items-baseline lg:[filter:drop-shadow(0_0_1px_rgb(0_0_0/0.85))_drop-shadow(0_2px_6px_rgb(0_6_18/0.7))]"
+                  style={{ perspective: '900px' }}
+                >
+                  {BRAND_LETTERS.map((char, idx) => (
+                    <span
+                      key={idx}
+                      ref={(el) => {
+                        clickLetterRefs.current[idx] = el;
+                      }}
+                      className="click-chrome-glyph inline-block font-extrabold tracking-[-0.03em] will-change-transform transition-transform duration-150 ease-out"
+                    >
+                      {char}
+                    </span>
+                  ))}
                 </span>
 
-                {/* Razor-thin specular horizon blade */}
                 <span
                   ref={clickBladeRef}
                   aria-hidden="true"
                   className="pointer-events-none absolute right-[-6%] -bottom-[0.04em] left-[-6%] h-[1.5px] origin-center bg-gradient-to-r from-transparent via-sky-200 to-transparent"
-                  style={{opacity: 0, transform: 'scaleX(0)'}}
+                  style={{ opacity: 0.9, transform: 'scaleX(0.85)' }}
                 />
               </span>
             </span>
           </h1>
-          <p className="mt-4 font-telemetry text-label font-medium text-white uppercase [text-shadow:0_0_2px_rgb(0_0_0/0.9),0_1px_4px_rgb(0_0_0/0.8),0_0_18px_rgb(0_6_18/0.75)]">{hero.subhead}</p>
+          <p className="mt-4 font-telemetry text-label font-medium text-white uppercase [text-shadow:0_0_2px_rgb(0_0_0/0.9),0_1px_4px_rgb(0_0_0/0.8),0_0_18px_rgb(0_6_18/0.75)]">
+            {hero.subhead}
+          </p>
         </div>
 
         {ORDER.slice(3).map((n) => layer(n))}
 
-        {/* Cosmic dust on the lens. */}
+        {/* Telemetry HUD — visible immediately */}
         <div
-          ref={veilRef}
+          ref={hudRef}
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              'radial-gradient(60% 50% at 30% 40%, rgba(170,184,210,0.55), transparent 70%), radial-gradient(50% 60% at 75% 60%, rgba(120,140,180,0.5), transparent 70%), radial-gradient(80% 80% at 50% 50%, rgba(20,26,40,0.85), rgba(5,7,12,0.95))',
-          }}
+          className="pointer-events-none absolute inset-4 font-telemetry text-[0.625rem] tracking-[0.14em] text-regolith/75 uppercase sm:inset-6 md:text-label"
+          style={{ opacity: 1 }}
         >
-          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center">
-            <p className="font-telemetry text-label text-regolith/80 uppercase">{hero.kicker}</p>
-            <p className="mt-3 px-4 font-hero text-[10px] sm:text-[0.8125rem] tracking-[0.22em] sm:tracking-[0.5em] text-white/90 uppercase">
-              {hero.prompt}
-            </p>
-            <span aria-hidden="true" className="mt-6 inline-block animate-bounce text-regolith/70 motion-reduce:animate-none">
-              ↓
-            </span>
-          </div>
-        </div>
-        <canvas ref={dustRef} aria-hidden="true" className="pointer-events-none absolute inset-0 size-full" />
-
-        {/* Telemetry HUD. */}
-        <div ref={hudRef} aria-hidden="true" className="pointer-events-none absolute inset-4 font-telemetry text-[0.625rem] tracking-[0.14em] text-regolith/75 uppercase sm:inset-6 md:text-label" style={{opacity: 0}}>
           <div className="brackets absolute inset-0 text-regolith/40" />
           <div className="absolute top-16 left-3 space-y-1 md:top-20 md:left-4">
             <p ref={clockRef}>T+ 00:00:00</p>
@@ -508,7 +456,7 @@ export function Earthrise() {
           </div>
           <div className="absolute top-16 right-3 hidden space-y-1 text-right md:top-20 md:right-4 md:block">
             <p>
-              ROI horizon elev <span ref={elevRef} className="text-earth">0.0°</span>
+              ROI horizon elev <span ref={elevRef} className="text-earth">4.2°</span>
             </p>
             <p className="text-regolith/50">Brand above horizon</p>
           </div>

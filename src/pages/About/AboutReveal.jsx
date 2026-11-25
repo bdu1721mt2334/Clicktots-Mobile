@@ -50,6 +50,7 @@ export function AboutReveal() {
   const captionLayerRef = useRef(null);
   const buttonWrapRef = useRef(null);
   const wordRefs = useRef([]);
+  const wordPrevRef = useRef([]);
   const shutterActiveRef = useRef(false);
 
   const sizeRef = useRef(
@@ -111,6 +112,7 @@ export function AboutReveal() {
 
     if (videoLayerRef.current) {
       const vl = videoLayerRef.current.style;
+      vl.visibility = aboutVisible ? "visible" : "hidden";
       vl.opacity = String(aboutO.toFixed(3));
       vl.transform = photoFull ? "none" : riseTransform;
       vl.clipPath = photoClip;
@@ -123,6 +125,7 @@ export function AboutReveal() {
 
     if (wordsLayerRef.current) {
       const wl = wordsLayerRef.current.style;
+      wl.visibility = wordsGone || !aboutVisible ? "hidden" : "visible";
       wl.opacity = wordsGone ? "0" : String(aboutO.toFixed(3));
       wl.transform = riseTransform;
     }
@@ -149,6 +152,7 @@ export function AboutReveal() {
         !shutterActiveRef.current && captionO > 0.5 ? "auto" : "none";
     }
 
+    const skipBlur = w < 768;
     for (let i = 0; i < CAPTION_WORDS.length; i++) {
       const span = wordRefs.current[i];
       if (!span) continue;
@@ -156,9 +160,15 @@ export function AboutReveal() {
         CAPTION_START +
         (i / CAPTION_WORDS.length) * (CAPTION_END - CAPTION_START - 0.04);
       const t = clamp01((p - start) / 0.04);
-      const blur = (1 - t) * 8;
+      if (wordPrevRef.current[i] === t) continue;
+      wordPrevRef.current[i] = t;
       span.style.opacity = String(t.toFixed(3));
-      span.style.filter = blur > 0.08 ? `blur(${blur.toFixed(2)}px)` : "none";
+      if (!skipBlur) {
+        const blur = (1 - t) * 8;
+        span.style.filter = blur > 0.08 ? `blur(${blur.toFixed(2)}px)` : "none";
+      } else if (span.style.filter) {
+        span.style.filter = "none";
+      }
       span.style.transform =
         t > 0.999 ? "none" : `translate3d(0, ${((1 - t) * 10).toFixed(2)}px, 0)`;
     }

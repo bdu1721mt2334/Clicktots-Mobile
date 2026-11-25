@@ -532,6 +532,7 @@ const css = `
 .wm-name{position:absolute;left:0;top:0;padding:7px 12px;background:var(--wm-ink);color:var(--wm-bg);border-radius:99px;font-size:10px;letter-spacing:.04em;pointer-events:none;opacity:0;transition:opacity .16s;white-space:nowrap;z-index:2}
 @media (max-width:1100px){.wm-mid{display:none}.wm-bot{grid-template-columns:1fr auto}}
 @media (max-width:760px){
+  .wm-orb{filter:none}
   .wm-hl{font-size:clamp(30px,9.5vw,52px)!important}
   #wm-l1{top:calc(50% - 2.05em)}
   .wm-cap{top:50%;width:min(82vw,24em);font-size:10.5px;line-height:1.45}

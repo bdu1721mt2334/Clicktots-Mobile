@@ -1,11 +1,14 @@
-// Purpose: Implement the Projects pages module, keeping this responsibility separate for maintainability.
-import { useCallback, useRef, useState } from "react";
+// Purpose: Implement the Projects pages module with lazy-loaded overlays.
+import { lazy, Suspense, useCallback, useRef, useState } from "react";
 import { StackSlider } from "@/components/StackSlider/StackSlider";
-import { CaseStudyModal } from "@/components/StackSlider/CaseStudyModal";
 import { PORTFOLIO_SLIDES } from "@/components/StackSlider/projects";
-import AllProjects from "@/pages/Projects/AllProjects";
 import { usePathname, navigate, goHome } from "@/lib/router";
 import "@/components/StackSlider/StackSlider.css";
+
+const CaseStudyModal = lazy(() =>
+  import("@/components/StackSlider/CaseStudyModal").then((m) => ({ default: m.CaseStudyModal }))
+);
+const AllProjects = lazy(() => import("@/pages/Projects/AllProjects"));
 
 const TAIL_VH = 130;
 
@@ -14,6 +17,8 @@ export default function Projects({ keyFactsRef }) {
   const [selected, setSelected] = useState(null);
   const pathname = usePathname();
   const allOpen = /^\/projects?$/i.test(pathname);
+  const [allEver, setAllEver] = useState(allOpen);
+  if (allOpen && !allEver) setAllEver(true);
 
   const openAll = useCallback(() => navigate("/projects"), []);
   const closeAll = useCallback(() => goHome(), []);
@@ -32,14 +37,22 @@ export default function Projects({ keyFactsRef }) {
         tailVh={TAIL_VH}
       />
 
-      <CaseStudyModal
-        item={selected}
-        items={PORTFOLIO_SLIDES}
-        onClose={() => setSelected(null)}
-        onSelect={(item) => setSelected(item)}
-      />
+      {selected && (
+        <Suspense fallback={null}>
+          <CaseStudyModal
+            item={selected}
+            items={PORTFOLIO_SLIDES}
+            onClose={() => setSelected(null)}
+            onSelect={(item) => setSelected(item)}
+          />
+        </Suspense>
+      )}
 
-      <AllProjects open={allOpen} onClose={closeAll} />
+      {allEver && (
+        <Suspense fallback={null}>
+          <AllProjects open={allOpen} onClose={closeAll} />
+        </Suspense>
+      )}
     </section>
   );
 }
