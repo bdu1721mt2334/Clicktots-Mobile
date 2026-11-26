@@ -1,5 +1,5 @@
 // Purpose: Implement the Navbar components module, keeping this responsibility separate for maintainability.
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { usePathname, navigate } from "@/lib/router";
 import { onFrame, getScrollY } from "@/lib/scroll";
@@ -40,53 +40,105 @@ const SERVICE_ICONS = {
   "CRO & AI Chat Funnels": MessageSquare,
 };
 
-/* entrance: logo → tabs → button drop in from above, one after another */
+/* entrance: logo → tabs → button → theme toggle drop in from above, one after another */
 const DROP_EASE = [0.22, 1, 0.36, 1];
 // opacity + transform only: a CSS filter here (even blur(0)) sits on the parent of the glass bar's
-// backdrop-filter and forces the browser to re-paint it every frame → the whole site felt slow
-const drop = (revealed) => ({
-  initial: false,
-  animate: revealed ? { opacity: 1, y: 0 } : { opacity: 0, y: -46 },
-  transition: { duration: 0.35, ease: DROP_EASE },
+// backdrop-filter and forces the browser to re-paint it every frame
+const drop = (revealed, delay = 0) => ({
+  initial: { opacity: 0, y: -36 },
+  animate: revealed ? { opacity: 1, y: 0 } : { opacity: 0, y: -36 },
+  transition: { duration: 0.68, delay, ease: DROP_EASE },
 });
 
-/* Hide on scroll-down, show on scroll-up (home page only: inner pages cover the navbar). Small per-frame
-   deltas from smooth scrolling are summed until they reach SCROLL_SLOP in one direction, so it never flickers. */
+/* Hide on scroll-down, show on scroll-up across BOTH Home (window/Lenis) and EVERY inner overlay scroller.
+   Small per-frame deltas are summed until they reach SCROLL_SLOP in one direction so it never flickers. */
 const SCROLL_SLOP = 28;
 const TOP_ZONE = 90; // always shown near the top of any page
 function useHideOnScroll(locked) {
   const [hidden, setHidden] = useState(false);
   const lockedRef = useRef(locked);
   lockedRef.current = locked;
+  const shownRef = useRef(true);
+
+  const setSafe = (hide) => {
+    if (hide === !shownRef.current) return;
+    shownRef.current = !hide;
+    setHidden(hide);
+  };
+
   useEffect(() => {
-    // runs in the shared frame loop and uses its scroll value: no scroll listener, no layout reads
-    let last = getScrollY();
-    let acc = 0;
-    let shown = true; // mirror of the state, so React is only told when it really changes
-    const set = (hide) => {
-      if (hide === !shown) return;
-      shown = !hide;
-      setHidden(hide);
-    };
-    return onFrame(() => {
-      const y = getScrollY();
-      const dy = y - last;
-      last = y;
+    let lastWin = getScrollY();
+    let accWin = 0;
+    const scrollerMap = new WeakMap();
+
+    const applyDelta = (y, dy, state) => {
       if (!dy) return;
       if (lockedRef.current || y < TOP_ZONE) {
-        acc = 0;
-        set(false);
+        state.acc = 0;
+        setSafe(false);
         return;
       }
-      acc = Math.sign(dy) === Math.sign(acc) ? acc + dy : dy;
-      if (acc > SCROLL_SLOP) set(true);
-      else if (acc < -SCROLL_SLOP) set(false);
+      state.acc = Math.sign(dy) === Math.sign(state.acc) ? state.acc + dy : dy;
+      if (state.acc > SCROLL_SLOP) setSafe(true);
+      else if (state.acc < -SCROLL_SLOP) setSafe(false);
+    };
+
+    // Home page (Lenis / window scroll)
+    const offFrame = onFrame(() => {
+      const y = getScrollY();
+      const dy = y - lastWin;
+      lastWin = y;
+      const st = { acc: accWin };
+      applyDelta(y, dy, st);
+      accWin = st.acc;
     });
+
+    // Inner pages & full-screen overlays (overflow-y-auto containers — capture phase catches non-bubbling scroll)
+    const onInnerScroll = (e) => {
+      const target = e.target;
+      if (!target || target === document || target === window) return;
+      if (!(target instanceof HTMLElement)) return;
+      // Skip tiny internal scrollers or explicitly ignored containers (e.g., dropdowns, drawer)
+      if (target.closest("[data-nav-ignore-scroll], .ct-drawer")) return;
+      if (target.scrollHeight <= target.clientHeight + 80) return;
+
+      const y = target.scrollTop;
+      let st = scrollerMap.get(target);
+      if (!st) {
+        st = { last: y, acc: 0 };
+        scrollerMap.set(target, st);
+        return;
+      }
+      const dy = y - st.last;
+      st.last = y;
+      applyDelta(y, dy, st);
+    };
+
+    window.addEventListener("scroll", onInnerScroll, { passive: true, capture: true });
+    return () => {
+      offFrame();
+      window.removeEventListener("scroll", onInnerScroll, { capture: true });
+    };
   }, []);
+
   useEffect(() => {
-    if (locked) setHidden(false);
+    if (locked) {
+      shownRef.current = true;
+      setHidden(false);
+    }
   }, [locked]);
-  return [hidden, setHidden];
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("ct-nav-hidden", hidden);
+    return () => document.documentElement.classList.remove("ct-nav-hidden");
+  }, [hidden]);
+
+  const setHiddenSynced = useCallback((val) => {
+    shownRef.current = !val;
+    setHidden(val);
+  }, []);
+
+  return [hidden, setHiddenSynced];
 }
 
 /* ───────────────────────── Services dropdown ─────────────────────────
@@ -664,8 +716,8 @@ export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, 
         }}
       >
         <div className="relative max-w-7xl mx-auto flex items-center justify-between gap-2 xl:gap-4">
-          {/* Left: Authentic Clicktots Logo (No extra text or setting icons) */}
-          <motion.div {...drop(logoLanded, 0.1)} className="pointer-events-auto flex shrink-0 items-center">
+          {/* Left: Authentic Clicktots Logo (larger, drops in first) */}
+          <motion.div {...drop(logoLanded, 0.08)} className="pointer-events-auto flex shrink-0 items-center">
             <a
               href="#"
               onClick={onLogoClick ? (e) => { e.preventDefault(); onLogoClick(); } : undefined}
@@ -676,10 +728,10 @@ export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, 
                 id="nav-logo-img"
                 src={onLightSurface ? "/assets/clicktots-logo.webp" : "/assets/clicktots-logo-dark.webp"}
                 alt="Clicktots Technologies"
-                width={120}
-                height={40}
+                width={150}
+                height={50}
                 decoding="sync"
-                className={`h-8 sm:h-9 lg:h-7 xl:h-10 w-auto object-contain ${
+                className={`h-10 sm:h-11 lg:h-9 xl:h-12 w-auto object-contain ${
                   onLightSurface
                     ? "lg:drop-shadow-[0_2px_10px_rgba(18,17,16,0.12)]"
                     : "lg:drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)]"
@@ -688,14 +740,14 @@ export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, 
             </a>
           </motion.div>
 
-          {/* Center: iPhone liquid glass tab bar + Seed-style frosted glass Services dropdown */}
+          {/* Center: iPhone liquid glass tab bar + Seed-style frosted glass Services dropdown (drops in second) */}
           <div
             className="pointer-events-none hidden lg:flex lg:flex-1 lg:justify-center xl:flex-none xl:absolute xl:left-1/2 xl:top-1/2 xl:-translate-x-1/2 xl:-translate-y-1/2 relative"
             onMouseEnter={() => clearTimeout(closeMenuTimer.current)}
             onMouseLeave={scheduleCloseServicesMenu}
           >
             <motion.div
-              {...drop(isRevealed, 0.25)}
+              {...drop(isRevealed, 0.24)}
               className="pointer-events-auto flex items-center justify-center"
             >
               <GlassTabBar
@@ -721,25 +773,25 @@ export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, 
             />
           </div>
 
-          {/* Right: Liquid Glass Blue Button (Desktop & Tablet Landscape) */}
+          {/* Right: Unified Brand Blue Box Button (drops in third) */}
           <motion.div {...drop(isRevealed, 0.4)} className="pointer-events-auto hidden lg:flex shrink-0 items-center">
             <LiquidGlass
               as="button"
               type="button"
               onClick={() => setIsExpertModalOpen(true)}
               variant="regular"
-              tint="#007AFF"
-              radius="capsule"
+              tint="#0071e3"
+              radius={8}
               interactive
               pressScale={0.96}
               refraction={1.25}
               dispersion={0.06}
               blur={14}
               style={{ lineHeight: 1 }}
-              className="ct-nav-cta group relative inline-flex items-center justify-center gap-2 xl:gap-3 h-[34px] xl:h-[42px] pl-3 pr-1.5 xl:pl-[22px] xl:pr-[7px] text-[8px] xl:text-[9.5px] text-white tracking-[0.02em] transition-all shadow-[0_8px_30px_-6px_rgba(0,122,255,0.6)] hover:shadow-[0_12px_36px_-4px_rgba(0,122,255,0.85)] cursor-pointer select-none active:scale-95"
+              className="ct-nav-cta group relative inline-flex items-center justify-center gap-2 xl:gap-3 h-[34px] xl:h-[42px] pl-3 pr-1.5 xl:pl-[18px] xl:pr-[7px] rounded-[8px] text-[8px] xl:text-[9.5px] font-bold text-white tracking-[0.02em] transition-all shadow-[0_8px_26px_-6px_rgba(0,113,227,0.65)] hover:shadow-[0_12px_34px_-4px_rgba(0,113,227,0.9)] cursor-pointer select-none active:scale-95"
             >
               {/* hover state from the blueprint: "Talk to Our Experts" rolls up into "Launch AI Growth Audit" */}
-              <span className="relative z-10 grid shrink-0 overflow-hidden whitespace-nowrap text-[8px] xl:text-[9.5px] font-medium text-white drop-shadow-sm">
+              <span className="relative z-10 grid shrink-0 overflow-hidden whitespace-nowrap text-[8px] xl:text-[9.5px] font-bold text-white drop-shadow-sm">
                 <span className="col-start-1 row-start-1 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-[130%] motion-reduce:transition-none">
                   Talk to Our Experts
                 </span>
@@ -758,14 +810,14 @@ export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, 
           </motion.div>
         </div>
 
-        {/* Mobile/Tablet Menu Icon */}
-        <motion.div {...drop(isRevealed, 0.3)} className="lg:hidden pointer-events-auto absolute right-4 sm:right-8 top-4 sm:top-6">
+        {/* Mobile/Tablet Menu Icon (drops in with right CTA) */}
+        <motion.div {...drop(isRevealed, 0.36)} className="lg:hidden pointer-events-auto absolute right-4 sm:right-8 top-4 sm:top-6">
           <button
             type="button"
             aria-label="Open navigation menu"
             aria-expanded={mobileMenuOpen}
             onClick={() => setMobileMenuOpen(true)}
-            className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors cursor-pointer ${
+            className={`flex h-10 w-10 items-center justify-center rounded-[8px] border transition-colors cursor-pointer ${
               onLightSurface
                 ? "border-[#121110]/20 bg-[#f6f3ec]/92 text-[#121110] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_18px_-6px_rgba(18,17,16,0.28)] hover:bg-white"
                 : "border-white/25 bg-[#0c111b]/85 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_6px_18px_-6px_rgba(0,0,0,0.6)] hover:bg-[#162032]/90"
@@ -909,7 +961,7 @@ export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, 
                   })}
                 </nav>
 
-                {/* the navbar's blue capsule (the one button that stays rounded) */}
+                {/* Unified brand blue box button */}
                 <LiquidGlass
                   as="button"
                   type="button"
@@ -918,15 +970,15 @@ export function Navbar({ isRevealed, logoLanded = true, activeTab, onTabChange, 
                     setIsExpertModalOpen(true);
                   }}
                   variant="regular"
-                  tint="#007AFF"
-                  radius="capsule"
+                  tint="#0071e3"
+                  radius={8}
                   interactive
                   pressScale={0.96}
                   refraction={1.25}
                   dispersion={0.06}
                   blur={14}
-                  style={{ lineHeight: 1, paddingLeft: 12, paddingRight: 4 }}
-                  className="mt-6 shrink-0 group relative flex w-full items-center justify-between gap-2 h-10 text-white shadow-[0_8px_30px_-6px_rgba(0,122,255,0.6)] cursor-pointer select-none active:scale-95"
+                  style={{ lineHeight: 1, paddingLeft: 12, paddingRight: 5 }}
+                  className="mt-6 shrink-0 group relative flex w-full items-center justify-between gap-2 h-10 rounded-[8px] text-white shadow-[0_8px_26px_-6px_rgba(0,113,227,0.65)] cursor-pointer select-none active:scale-95"
                 >
                   <span className="relative z-10 grid min-w-0 overflow-hidden whitespace-nowrap text-[9px] font-bold tracking-[0.01em] text-white drop-shadow-sm">
                     <span className="col-start-1 row-start-1 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-[130%] motion-reduce:transition-none">

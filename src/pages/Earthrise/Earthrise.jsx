@@ -482,31 +482,46 @@ export function Earthrise() {
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 size-full"
           />
-          <p
-            className="relative z-10 font-hero uppercase text-[#d7e0f0]/75"
+          <div
+            className="relative z-10 flex flex-col items-center px-6 py-4 rounded-2xl"
             style={{
-              fontSize: 'clamp(0.6rem, 1.05vw, 0.85rem)',
-              letterSpacing: '0.16em',
-              textShadow: '0 1px 10px rgba(0, 6, 18, 0.8)',
+              background:
+                'radial-gradient(closest-side, rgba(2, 8, 22, 0.72) 0%, rgba(2, 8, 22, 0.36) 62%, transparent 100%)',
             }}
           >
-            AI-POWERED DIGITAL MARKETING AGENCY &middot; CHENNAI
-          </p>
-          <p
-            className="relative z-10 mt-3 font-hero uppercase text-white/95 tracking-[0.22em] md:tracking-[0.34em]"
-            style={{
-              fontSize: 'clamp(0.72rem, 1.32vw, 1.1rem)',
-              textShadow: '0 2px 18px rgba(0, 6, 18, 0.85)',
-            }}
-          >
-            SCROLL TO CLEAR THE MARKET NOISE
-          </p>
-          <span
-            aria-hidden="true"
-            className="relative z-10 mt-5 inline-block text-[0.95rem] text-[#d7e0f0]/75"
-          >
-            &darr;
-          </span>
+            <p
+              className="relative z-10 font-hero font-bold uppercase text-white"
+              style={{
+                fontSize: 'clamp(0.72rem, 1.28vw, 1.05rem)',
+                letterSpacing: '0.18em',
+                fontSynthesisWeight: 'auto',
+                WebkitTextStroke: '0.35px rgba(255, 255, 255, 0.65)',
+                textShadow:
+                  '0 1px 2px rgba(0, 0, 0, 0.98), 0 2px 12px rgba(0, 6, 18, 0.95), 0 4px 28px rgba(0, 6, 18, 0.85)',
+              }}
+            >
+              AI-POWERED DIGITAL MARKETING AGENCY &middot; CHENNAI
+            </p>
+            <p
+              className="relative z-10 mt-3.5 font-hero font-bold uppercase text-white tracking-[0.2em] md:tracking-[0.3em]"
+              style={{
+                fontSize: 'clamp(0.88rem, 1.65vw, 1.4rem)',
+                fontSynthesisWeight: 'auto',
+                WebkitTextStroke: '0.55px rgba(255, 255, 255, 0.85)',
+                textShadow:
+                  '0 1px 3px rgba(0, 0, 0, 0.98), 0 3px 16px rgba(0, 6, 18, 0.95), 0 6px 34px rgba(0, 6, 18, 0.9)',
+              }}
+            >
+              SCROLL TO CLEAR THE MARKET NOISE
+            </p>
+            <span
+              aria-hidden="true"
+              className="relative z-10 mt-5 inline-block text-[1.15rem] font-bold text-white animate-bounce motion-reduce:animate-none"
+              style={{ textShadow: '0 2px 10px rgba(0, 0, 0, 0.95)' }}
+            >
+              &darr;
+            </span>
+          </div>
         </div>
 
         {/* Hero Headline + Live Physics "Click" Logo — fades in as the veil clears */}
@@ -595,36 +610,40 @@ export function Earthrise() {
               </span>
             </span>
           </h1>
-          <p className="mt-4 font-telemetry text-label font-medium text-white uppercase [text-shadow:0_0_2px_rgb(0_0_0/0.9),0_1px_4px_rgb(0_0_0/0.8),0_0_18px_rgb(0_6_18/0.75)]">
+          <p
+            className="mt-5 inline-block rounded-xl px-5 py-2 font-telemetry font-bold text-white uppercase tracking-[0.18em]"
+            style={{
+              fontSize: 'clamp(0.68rem, 1.15vw, 0.98rem)',
+              fontSynthesisWeight: 'auto',
+              WebkitTextStroke: '0.4px rgba(255, 255, 255, 0.75)',
+              background:
+                'radial-gradient(closest-side, rgba(2, 8, 22, 0.76) 0%, rgba(2, 8, 22, 0.42) 68%, transparent 100%)',
+              textShadow:
+                '0 1px 2px rgba(0, 0, 0, 1), 0 2px 10px rgba(0, 4, 14, 0.96), 0 0 22px rgba(0, 6, 18, 0.92)',
+            }}
+          >
             {hero.subhead}
           </p>
         </div>
 
         {ORDER.slice(3).map((n) => layer(n))}
 
-        {/* Telemetry HUD — fades in once the veil clears */}
+        {/* Bottom-center scroll cue — fades in once the veil clears */}
         <div
           ref={hudRef}
           aria-hidden="true"
-          className="pointer-events-none absolute inset-4 font-telemetry text-[0.625rem] tracking-[0.14em] text-regolith/75 uppercase sm:inset-6 md:text-label"
+          className="pointer-events-none absolute inset-4 font-telemetry text-[0.7rem] tracking-[0.18em] text-white uppercase sm:inset-6 md:text-xs"
           style={{ opacity: 0, visibility: 'hidden' }}
         >
-          <div className="brackets absolute inset-0 text-regolith/40" />
-          <div className="absolute top-16 left-3 space-y-1 md:top-20 md:left-4">
-            <p ref={clockRef}>T+ 00:00:00</p>
-            <p className="text-regolith/50">Mission clock</p>
-          </div>
-          <div className="absolute top-16 right-3 hidden space-y-1 text-right md:top-20 md:right-4 md:block">
-            <p>
-              ROI horizon elev <span ref={elevRef} className="text-earth">4.2°</span>
-            </p>
-            <p className="text-regolith/50">Brand above horizon</p>
-          </div>
-          <div className="absolute bottom-3 left-3 space-y-1 md:bottom-4 md:left-4">
-            <p className="text-earth/90">{hero.signal}</p>
-            <p>{hero.site}</p>
-          </div>
-          <div className="absolute right-3 bottom-3 flex items-center gap-2 md:right-4 md:bottom-4">
+          <div
+            className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-lg px-4 py-1.5 font-bold text-white md:bottom-5"
+            style={{
+              fontSynthesisWeight: 'auto',
+              background: 'rgba(2, 8, 20, 0.55)',
+              border: '1px solid rgba(255, 255, 255, 0.16)',
+              textShadow: '0 1px 8px rgba(0, 0, 0, 0.95)',
+            }}
+          >
             Scroll <span className="inline-block animate-bounce motion-reduce:animate-none">↓</span>
           </div>
         </div>

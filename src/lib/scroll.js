@@ -1,23 +1,5 @@
-// Purpose: Provide the shared Lenis scrolling loop and scroll utilities used by the page.
-import Lenis from "lenis";
-import { frame, cancelFrame } from "motion/react";
-
-/**
- * One loop for the whole page, run INSIDE framer-motion's frame scheduler so every frame is
- * "all reads, then all writes" for the whole site (ours and framer-motion's):
- *   read phase   → Lenis moves the scroll, the scroll value + every watched section's rect are read once
- *   render phase → every scroll-driven section writes its styles
- * Before, our loop and framer-motion's ran as two separate rAF callbacks that interleaved reads and writes,
- * so the browser had to redo style + layout several times per frame.
- */
+// Purpose: Provide an idle-sleeping shared rAF loop and lazy-loaded Lenis smooth scroll with zero initial bundle bloat.
 const subscribers = new Set();
-
-/* ── Batched geometry ──
-   Scroll sections used to call el.getBoundingClientRect() inside their frame callback, AFTER other
-   sections had already written styles that frame → every read forced a synchronous style + layout pass
-   (several per frame, on every frame: "layout thrashing"). Now each section asks scrollRect(el): the
-   loop measures all those elements ONCE at the start of the frame, while layout is still clean, and hands
-   out the stored rects. Outside the loop (init, resize) scrollRect simply measures live. */
 const watched = new Set();
 const frameRects = new Map();
 let inFrame = false;
@@ -41,55 +23,70 @@ export function scrollRect(el) {
 }
 
 let lenis = null;
-let frameY = 0;
-/** Page scroll position for this frame, read once at the start of the frame (never forces layout).
-    Reading window.scrollY inside a scroll event, after styles were written, forced a full layout. */
+let lenisRequested = false;
+let frameY = typeof window !== "undefined" ? window.scrollY : 0;
 export const getScrollY = () => frameY;
+
 let paused = false;
-let running = false;
+let rafId = 0;
+let idleFrames = 0;
+let activeAlways = 0;
 
 const markDirty = () => {
   layoutDirty = true;
+  wakeLoop();
 };
 
-const readStep = ({ timestamp }) => {
+const step = (timestamp) => {
+  rafId = 0;
   if (paused) return;
+
   lenis?.raf(timestamp);
-  frameY = lenis ? lenis.animatedScroll : window.scrollY;
-  // Refresh geometry only when scroll moved, layout resized/changed, or periodically (every 500ms)
-  const moved = Math.abs(frameY - lastMeasuredY) > 0.05;
-  if (!moved && !layoutDirty && timestamp - lastLayoutTick < 500) return;
-  lastMeasuredY = frameY;
-  layoutDirty = false;
-  lastLayoutTick = timestamp;
-  // one clean geometry read for every watched element, before anyone writes styles this frame
-  frameRects.clear();
-  watched.forEach((el) => {
-    if (el.isConnected) frameRects.set(el, el.getBoundingClientRect());
-    else watched.delete(el);
-  });
-};
-const renderStep = ({ timestamp }) => {
-  if (paused) return;
+  const nextY = lenis ? lenis.animatedScroll : window.scrollY;
+  const moved = Math.abs(nextY - frameY) > 0.05 || Math.abs(nextY - lastMeasuredY) > 0.05;
+  frameY = nextY;
+
+  if (moved || layoutDirty || timestamp - lastLayoutTick >= 500) {
+    lastMeasuredY = frameY;
+    layoutDirty = false;
+    lastLayoutTick = timestamp;
+    frameRects.clear();
+    watched.forEach((el) => {
+      if (el.isConnected) frameRects.set(el, el.getBoundingClientRect());
+      else watched.delete(el);
+    });
+  }
+
   inFrame = true;
   try {
     subscribers.forEach((fn) => fn(timestamp));
   } finally {
     inFrame = false;
   }
+
+  const lenisActive = Boolean(lenis && (lenis.isScrolling || Math.abs(lenis.velocity || 0) > 0.01));
+  if (moved || lenisActive || activeAlways > 0) {
+    idleFrames = 0;
+    rafId = requestAnimationFrame(step);
+  } else if (idleFrames < 18) {
+    idleFrames += 1;
+    rafId = requestAnimationFrame(step);
+  }
 };
 
-function stopLoop() {
-  cancelFrame(readStep);
-  cancelFrame(renderStep);
-  running = false;
+export function wakeLoop() {
+  if (paused || typeof requestAnimationFrame === "undefined") return;
+  idleFrames = 0;
+  if (!rafId) {
+    rafId = requestAnimationFrame(step);
+  }
 }
 
-function kick() {
-  if (running) return;
-  running = true;
-  frame.read(readStep, true); // keepAlive: every frame
-  frame.render(renderStep, true);
+function stopLoop() {
+  if (rafId) {
+    cancelAnimationFrame(rafId);
+    rafId = 0;
+  }
 }
 
 export function startScroll(reducedMotion) {
@@ -98,19 +95,45 @@ export function startScroll(reducedMotion) {
     (window.matchMedia?.("(pointer: coarse)").matches ||
       ("ontouchstart" in window && navigator.maxTouchPoints > 0 && window.innerWidth < 1024));
 
-  // Keep native compositor touch scrolling on Android/iOS; use Lenis smooth wheel on desktop
-  if (!reducedMotion && !isTouchMobile) {
-    lenis = new Lenis({ lerp: 0.11, smoothWheel: true, wheelMultiplier: 0.9 });
-  }
+  let disposed = false;
 
+  const ensureLenis = () => {
+    if (disposed || reducedMotion || isTouchMobile || lenisRequested) return;
+    lenisRequested = true;
+    import("lenis")
+      .then(({ default: Lenis }) => {
+        if (disposed) return;
+        lenis = new Lenis({ lerp: 0.11, smoothWheel: true, wheelMultiplier: 0.9 });
+        if (paused) lenis.stop();
+        wakeLoop();
+      })
+      .catch(() => {
+        lenisRequested = false;
+      });
+  };
+
+  const onScroll = () => wakeLoop();
+  const onWheel = () => {
+    ensureLenis();
+    wakeLoop();
+  };
+  const onTouchMove = () => wakeLoop();
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("wheel", onWheel, { passive: true });
+  window.addEventListener("touchmove", onTouchMove, { passive: true });
   window.addEventListener("resize", markDirty, { passive: true });
-  kick();
 
   return () => {
+    disposed = true;
+    window.removeEventListener("scroll", onScroll);
+    window.removeEventListener("wheel", onWheel);
+    window.removeEventListener("touchmove", onTouchMove);
     window.removeEventListener("resize", markDirty);
     stopLoop();
     lenis?.destroy();
     lenis = null;
+    lenisRequested = false;
   };
 }
 
@@ -121,9 +144,14 @@ export function onFrame(fn) {
   };
 }
 
-/** Smooth-scrolls to an element (or to a pixel offset / the top). */
+export function keepLoopAlive(active) {
+  activeAlways = Math.max(0, activeAlways + (active ? 1 : -1));
+  if (activeAlways > 0) wakeLoop();
+}
+
 export function scrollToTarget(target, duration = 1.6) {
   if (target == null) return;
+  wakeLoop();
   if (lenis) {
     lenis.scrollTo(target, { duration });
   } else if (typeof target === "number") {
@@ -133,15 +161,11 @@ export function scrollToTarget(target, duration = 1.6) {
   }
 }
 
-/** Pause / resume page scrolling (used while a full-screen overlay is open).
-    Counted: overlays can overlap (a project popup inside All Projects, one page closing while the next
-    opens), so the page only unlocks when the LAST one lets go. Otherwise the home page's scrollbar came
-    back next to the overlay's own one ("two scrollbars"). */
 let lockCount = 0;
 export function setScrollLocked(want) {
   lockCount = Math.max(0, lockCount + (want ? 1 : -1));
   const locked = lockCount > 0;
-  if (locked === paused) return; // nothing changes while other overlays still hold the lock
+  if (locked === paused) return;
   paused = locked;
   if (typeof document !== "undefined") {
     document.documentElement.style.overflow = locked ? "hidden" : "";
@@ -151,6 +175,6 @@ export function setScrollLocked(want) {
     stopLoop();
   } else {
     lenis?.start();
-    kick();
+    wakeLoop();
   }
 }

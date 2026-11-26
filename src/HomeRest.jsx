@@ -1,5 +1,6 @@
-// Purpose: Code-split below-the-fold home page sections so the hero paints with minimal initial JS and CSS.
+// Purpose: Code-split below-the-fold home page sections (including AboutReveal) so the hero paints with minimal initial JS and CSS.
 import { useRef } from "react";
+import { AboutReveal } from "@/pages/About/AboutReveal";
 import ShutterTransition from "@/components/ShutterTransition/ShutterTransition";
 import KeyFacts from "@/pages/KeyFacts/KeyFacts";
 import Projects from "@/pages/Projects/Projects";
@@ -22,6 +23,7 @@ export default function HomeRest({ reduced, theme = "light" }) {
 
   return (
     <>
+      <AboutReveal />
       <ShutterTransition color={shutterColor} />
       <KeyFacts sectionRef={keyFactsRef} theme={theme} />
       <Projects keyFactsRef={keyFactsRef} theme={theme} />

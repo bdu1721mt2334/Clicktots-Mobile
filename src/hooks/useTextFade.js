@@ -1,13 +1,11 @@
-// Purpose: Implement the useTextFade hooks module, keeping this responsibility separate for maintainability.
+// Purpose: Site-wide scroll text fade-in & fade-out hook (continuous while scrolling up and down).
 import { useEffect } from "react";
 
-/* Site-wide text fade-in: headings, paragraphs, list items and captions fade up (with a soft
-   blur) the first time they scroll into view. It is purely additive:
-   - it only touches elements that have no inline opacity / transform / filter of their own,
-     so the scroll-driven scenes (hero, ring, Work in Motion, rocket …) keep full control;
-   - text that already has its own reveal (BlurReveal words, the services word-rise, …) is skipped;
-   - once the fade has played, the helper classes are removed again, leaving the element untouched.
-   Reduced motion: nothing is hidden and nothing animates. */
+/* Site-wide text fade-in & fade-out: headings, paragraphs, list items, and captions smoothly fade
+   in as they enter the viewport and fade out as they leave while scrolling up or down.
+   - Purely additive: skips elements with inline opacity/transform/filter or custom word reveals.
+   - Respects [data-text-fade='off'] on scroll-pinned canvas/SVG sections (hero, branches, rocket).
+   - Reduced motion: nothing is hidden and nothing animates. */
 
 const SELECTOR = "h1,h2,h3,h4,h5,p,li,blockquote,figcaption,dt,dd,label";
 const SKIP = ".rg-scope,[data-text-fade='off'],nav,header,canvas,svg,button,a>*:only-child";
@@ -19,9 +17,8 @@ const hasOwnMotion = (el) => {
   return !!el.querySelector(":scope > span[aria-hidden='true'], :scope .rg-rise");
 };
 
-/** Attach the fade-in to every text element inside `root` (now and added later). Returns a cleanup.
- *  skipVisible: leave text that is already on screen when the page loads alone (the home page hero). */
-export function attachTextFade(root, { skipVisible = true } = {}) {
+/** Attach continuous fade-in / fade-out to every text element inside `root` (now and added later). */
+export function attachTextFade(root, { skipVisible = false } = {}) {
   if (!root || typeof IntersectionObserver === "undefined") return () => {};
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return () => {};
 
@@ -31,26 +28,30 @@ export function attachTextFade(root, { skipVisible = true } = {}) {
 
   const io = new IntersectionObserver(
     (entries) => {
-      entries
-        .filter((e) => e.isIntersecting)
-        .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
-        .forEach((e) => {
+      const entering = [];
+      for (const e of entries) {
+        if (e.isIntersecting) {
+          entering.push(e);
+        } else {
           const el = e.target;
-          io.unobserve(el);
-          const delay = Math.min(batch++, 8) * 70;
-          clearTimeout(batchTimer);
-          batchTimer = setTimeout(() => (batch = 0), 200);
-          el.style.setProperty("--ct-d", `${delay}ms`);
-          requestAnimationFrame(() => el.classList.add("ct-in"));
-          const done = () => {
-            el.classList.remove("ct-fade", "ct-in");
-            el.style.removeProperty("--ct-d");
-          };
-          el.addEventListener("transitionend", done, { once: true });
-          setTimeout(done, 1800 + delay); // safety net
-        });
+          el.style.removeProperty("--ct-d");
+          el.classList.remove("ct-in");
+        }
+      }
+      if (entering.length) {
+        entering
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
+          .forEach((e) => {
+            const el = e.target;
+            const delay = Math.min(batch++, 6) * 55;
+            clearTimeout(batchTimer);
+            batchTimer = setTimeout(() => (batch = 0), 180);
+            el.style.setProperty("--ct-d", `${delay}ms`);
+            requestAnimationFrame(() => el.classList.add("ct-in"));
+          });
+      }
     },
-    { rootMargin: "0px 0px -8% 0px", threshold: 0.05 }
+    { rootMargin: "-4% 0px -6% 0px", threshold: 0.04 }
   );
 
   const register = () => {
@@ -59,12 +60,13 @@ export function attachTextFade(root, { skipVisible = true } = {}) {
       seen.add(el);
       if (el.closest(SKIP) || hasOwnMotion(el)) return;
       if (!el.textContent.trim()) return;
-      if (skipVisible) {
-        // anything already on screen at load is left alone (the hero etc. have their own intro)
-        const r = el.getBoundingClientRect();
-        if (r.top < window.innerHeight * 0.92 && r.bottom > 0 && window.scrollY < 40) return;
-      }
+      const r = el.getBoundingClientRect();
+      const onScreenNow = r.top < window.innerHeight * 0.94 && r.bottom > 0;
+      if (skipVisible && onScreenNow && window.scrollY < 40) return;
       el.classList.add("ct-fade");
+      if (onScreenNow) {
+        el.classList.add("ct-in");
+      }
       io.observe(el);
     });
   };
@@ -73,7 +75,7 @@ export function attachTextFade(root, { skipVisible = true } = {}) {
   let t = 0;
   const mo = new MutationObserver(() => {
     clearTimeout(t);
-    t = setTimeout(register, 250);
+    t = setTimeout(register, 200);
   });
   mo.observe(root, { childList: true, subtree: true });
 
@@ -88,6 +90,6 @@ export function attachTextFade(root, { skipVisible = true } = {}) {
 export function useTextFade(reduced) {
   useEffect(() => {
     if (reduced) return undefined;
-    return attachTextFade(document.getElementById("root"));
+    return attachTextFade(document.getElementById("root"), { skipVisible: false });
   }, [reduced]);
 }

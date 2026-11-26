@@ -94,11 +94,11 @@ const INDIA_SIGNAL = [
   [0.505, 0.565], // Dubai
   [0.57, 0.62], // Delhi
 ];
-const T_GLOBAL = [0.635, 0.745]; // camera pull-back into the world map
-const T_HEADING = [0.655, 0.725]; // "6 hubs" → "9 hubs on 3 continents"
+const T_GLOBAL = [0.625, 0.755]; // camera pull-back into the world map
+const T_HEADING = [0.645, 0.725]; // "6 hubs" → "9 hubs on 3 continents"
 const GLOBAL_SIGNAL = [
-  [0.745, 0.8], // Singapore is notified
-  [0.81, 0.865], // United Kingdom
+  [0.755, 0.805], // Singapore is notified
+  [0.815, 0.865], // United Kingdom
   [0.875, 0.925], // United States (typed in fully before the exit ripple)
 ];
 const T_RIPPLE = [0.958, 0.995];
@@ -111,6 +111,7 @@ const STEPS = [
   ...INDIA_HUBS.slice(1).map((hub, i) => ({ hub, from: INDIA_HUBS[0], t: INDIA_SIGNAL[i] })),
   ...GLOBAL_HOPS.map(([from, to], i) => ({ hub: HUB_BY_ID[to], from: HUB_BY_ID[from], t: GLOBAL_SIGNAL[i] })),
 ];
+const STEP_PTS = STEPS.map((st) => worldXY(st.hub.lon, st.hub.lat));
 const isGlobalStep = (step) => GLOBAL_SIGNAL.includes(step.t);
 /* India hubs light up as their signal line arrives; global hubs are notified: they pop up early in their window */
 const arriveAt = (p, step) => {
@@ -170,22 +171,20 @@ const CSS = `
 .bm-map svg{display:block;width:100%;height:100%;overflow:visible}
 .bm-region-dots{fill:url(#bm-dots-fine)}
 .bm-region-fill{fill:url(#bm-region-grad)}
-.bm-region-coast{fill:none;stroke:rgba(140,200,255,.6);stroke-width:1;vector-effect:non-scaling-stroke;stroke-linejoin:round}
-.bm-region-borders{fill:none;stroke:rgba(140,200,255,.22);stroke-width:.8;vector-effect:non-scaling-stroke}
+.bm-region-coast{fill:none;stroke:rgba(140,200,255,.6);stroke-width:.24;stroke-linejoin:round}
+.bm-region-borders{fill:none;stroke:rgba(140,200,255,.22);stroke-width:.18}
 .bm-ilabel{font:600 13px ${MONO};letter-spacing:.08em;text-transform:uppercase;paint-order:stroke;fill:#fff;stroke:rgba(4,7,13,.85);stroke-width:3.4px;stroke-linejoin:round}
 .bm-world{position:absolute;left:0;top:0}
 .bm-world svg{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:visible;user-select:none}
-/* holographic dot-matrix world (vector: sharp at every zoom) */
-/* cropped to VIEW (branchesData.js): nothing outside the window is drawn; both world layers fade out softly
-   at the edges (the mask is painted once; while the camera moves the layer is only GPU-scaled) */
-.bm-holo svg{overflow:hidden}
-.bm-world{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 6%,#000 95%,transparent 100%),linear-gradient(180deg,transparent 0,#000 6%,#000 90%,transparent 100%);-webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent 0,#000 6%,#000 95%,transparent 100%),linear-gradient(180deg,transparent 0,#000 6%,#000 90%,transparent 100%);mask-composite:intersect}
+/* holographic dot-matrix world: static stroke widths + no mask on the scaled layer allow the GPU to cache
+   both SVGs once and scale them at locked 60/120fps during India → World pull-back */
+.bm-holo svg{overflow:hidden;contain:strict}
 .bm-land-fill{fill:url(#bm-land-grad)}
 .bm-land-dots{fill:url(#bm-dots)}
-.bm-coast{fill:none;stroke:rgba(140,200,255,.55);stroke-width:.9;vector-effect:non-scaling-stroke;stroke-linejoin:round}
-.bm-borders{fill:none;stroke:rgba(140,200,255,.16);stroke-width:.7;vector-effect:non-scaling-stroke}
-.bm-grat{fill:none;stroke:rgba(255,255,255,.055);stroke-width:.7;vector-effect:non-scaling-stroke}
-.bm-blur{position:absolute;left:0;top:0;bottom:0;width:46vw;background:linear-gradient(90deg,rgba(4,7,13,.78) 0,rgba(4,7,13,.58) 55%,rgba(4,7,13,0) 100%);-webkit-backdrop-filter:blur(11px);backdrop-filter:blur(11px);-webkit-mask-image:linear-gradient(90deg,#000 0,#000 58%,transparent 100%);mask-image:linear-gradient(90deg,#000 0,#000 58%,transparent 100%)}
+.bm-coast{fill:none;stroke:rgba(140,200,255,.55);stroke-width:.62;stroke-linejoin:round}
+.bm-borders{fill:none;stroke:rgba(140,200,255,.16);stroke-width:.45}
+.bm-grat{fill:none;stroke:rgba(255,255,255,.055);stroke-width:.45}
+.bm-blur{position:absolute;left:0;top:0;bottom:0;width:43vw;background:linear-gradient(90deg,rgba(4,7,13,.94) 0,rgba(4,7,13,.80) 48%,rgba(4,7,13,.35) 76%,rgba(4,7,13,0) 100%);pointer-events:none;will-change:opacity}
 .bm-ring{fill:none;stroke:${SIGNAL_COLOR};stroke-width:1.6;transform-box:fill-box;transform-origin:center;animation:bm-ping 2.6s ease-out infinite}
 .bm-ring.b{animation-delay:1.3s}
 @keyframes bm-ping{0%{transform:scale(.4);opacity:.95}100%{transform:scale(3.4);opacity:0}}
@@ -210,7 +209,7 @@ const CSS = `
 .bm-wring{fill:none;stroke:${WORLD_GLOW};stroke-width:1.4;transform-box:fill-box;transform-origin:center;animation:bm-ping 2.6s ease-out infinite}
 .bm-wring.b{animation-delay:1.3s}
 .bm-burst{fill:none;stroke:#bfe0ff;stroke-width:1.6;opacity:0}
-.bm-country{fill:rgba(72,162,255,.32);stroke:#9ed0ff;stroke-width:1.35;stroke-linejoin:round;vector-effect:non-scaling-stroke;transition:none}
+.bm-country{fill:rgba(72,162,255,.32);stroke:#9ed0ff;stroke-width:.85;stroke-linejoin:round;transition:none}
 @media (max-width:899px){.bm-hud{display:none}.bm-pin text{font-size:11px}}
 .bm-narrative{margin:16px 0 0;max-width:min(30vw,420px);font:400 13px/1.6 ${DISPLAY};color:rgba(255,255,255,.62)}
 @media (max-height:780px){.bm-narrative{display:none}}
@@ -219,7 +218,7 @@ const CSS = `
   .bm-country,.bm-burst{filter:none!important}
   .bm-title{top:clamp(54px,7vh,70px)!important}
   .bm-map{right:0;left:0;margin:0 auto;top:auto;bottom:1vh;height:min(70vh,74vw)}
-  .bm-blur{width:100%!important;bottom:auto;height:42vh;background:linear-gradient(180deg,rgba(4,7,13,.95) 0,rgba(4,7,13,.9) 88%,rgba(4,7,13,0) 100%);-webkit-backdrop-filter:none;backdrop-filter:none;-webkit-mask-image:linear-gradient(180deg,#000 0,#000 90%,transparent 100%);mask-image:linear-gradient(180deg,#000 0,#000 90%,transparent 100%)}
+  .bm-blur{width:100%!important;bottom:auto;height:42vh;background:linear-gradient(180deg,rgba(4,7,13,.95) 0,rgba(4,7,13,.9) 88%,rgba(4,7,13,0) 100%)}
 }
 @media (max-width:767px){
   .bm-ring,.bm-wring{animation:none!important;opacity:.45}
@@ -232,8 +231,6 @@ const CSS = `
   .bm-map{bottom:-2vh;height:min(60vh,80vw)}
   .bm-mlist{display:block;position:absolute;left:6vw;right:6vw;top:calc(7vh + 98px);pointer-events:none}
   .bm-ilabel{font-size:10.5px}
-  /* softer edge fade: the crop already ends at the hubs */
-  .bm-world{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 3%,#000 97%,transparent 100%),linear-gradient(180deg,transparent 0,#000 4%,#000 92%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 3%,#000 97%,transparent 100%),linear-gradient(180deg,transparent 0,#000 4%,#000 92%,transparent 100%)}
   .bm-mgroup{position:absolute;left:0;right:0;top:0;will-change:opacity}
   .bm-mrow{display:flex;align-items:baseline;gap:12px;padding:5px 0;border-top:1px solid rgba(255,255,255,.14)}
   .bm-mrow:last-child{border-bottom:1px solid rgba(255,255,255,.14)}
@@ -324,7 +321,7 @@ export default function BranchesMap() {
     const G = {
       vw: 0, vh: 0, rs: 104, ax: 0, ay: 0, cx: 0, cy: 0, ang: -90, f: 1, zmax: ZOOM_DEFAULT,
       // world map rest rect (stage px), its scale (px per world unit), Chennai on it, and the pull-back zoom
-      wl: 0, wt: 0, ws: 1, wcx: 0, wcy: 0, s0: 6,
+      wl: 0, wt: 0, ws: 1, wcx: 0, wcy: 0, s0: 6, vx: VIEW.x, vy: VIEW.y,
     };
     let lastP = -1;
     let shown = false;
@@ -374,6 +371,8 @@ export default function BranchesMap() {
       G.wl = wide ? G.vw - ww - G.vw * 0.006 : (G.vw - ww) / 2;
       G.wt = wide ? (G.vh - wh) / 2 + G.vh * 0.03 : Math.min(G.vh - wh - G.vh * 0.08, G.vh * 0.665 - wh / 2); // narrow: centred in the space under the list
       G.ws = ww / V.w;
+      G.vx = V.x;
+      G.vy = V.y;
       worldBoxes.current.forEach((b) => {
         if (!b) return;
         b.style.left = `${G.wl.toFixed(1)}px`;
@@ -520,12 +519,10 @@ export default function BranchesMap() {
         rocket.current.style.transform = `translate3d(${(rx - G.rs / 2).toFixed(2)}px,${(ry - G.rs / 2).toFixed(2)}px,0) rotate(${(G.ang + 45).toFixed(2)}deg) scale(${sc.toFixed(4)})`;
       }
 
-      /* left side: blurred, darkened strip + title + list */
+      /* left side: darkened gradient strip + title + list (no per-frame width or backdrop-filter thrash) */
       const ui = easeOutCubic(range(p, T_UI[0], T_UI[1]));
       if (blurRef.current) {
         blurRef.current.style.opacity = String(ui);
-        // the strip narrows in the global chapter so the whole USA stays sharp
-        if (wide) blurRef.current.style.width = `${lerp(46, 40, inOut(range(p, T_GLOBAL[0], T_GLOBAL[1]))).toFixed(2)}vw`;
       }
       if (title.current) {
         title.current.style.opacity = String(ui);
@@ -594,17 +591,14 @@ export default function BranchesMap() {
         el.style.opacity = faStr;
         el.style.visibility = faVis;
       });
-      /* close-up detail SVG & whole-world SVG live in separate GPU-composited SVGs so opacity cross-fades
-         run purely on the compositor without re-rasterizing 270KB of vector paths every frame */
+      /* close-up detail SVG & whole-world SVG stay GPU-promoted; opacity cross-fades run purely on compositor */
       if (regionRef.current) {
-        const ro = 1 - range(gt, 0.05, 0.4);
+        const ro = 1 - range(gt, 0.05, 0.42);
         regionRef.current.style.opacity = ro <= 0.001 ? "0" : ro.toFixed(3);
-        regionRef.current.style.visibility = ro <= 0.001 ? "hidden" : "visible";
       }
       if (baseLandRef.current) {
-        const bo = range(gt, 0, 0.35);
+        const bo = range(gt, 0, 0.36);
         baseLandRef.current.style.opacity = bo <= 0.001 ? "0" : bo.toFixed(3);
-        baseLandRef.current.style.visibility = bo <= 0.001 ? "hidden" : "visible";
       }
 
       /* markers, lines and labels keep a constant on-screen size whatever the zoom: u = 1 / (screen px per unit) */
@@ -653,21 +647,28 @@ export default function BranchesMap() {
         });
       }
 
-      STEPS.forEach((step, i) => {
-        const m = worldMarkers.current[i];
-        if (!m) return;
-        const isGlobal = i >= INDIA_HUBS.length;
-        // India's own world pins (India / UAE) take over from the orange close-up markers during the pull-back
-        const arrive = isGlobal ? arriveAt(p, step) : range(gt, 0.25, 0.7);
-        if (arrive <= 0) {
-          if (m.style.opacity !== "0") m.style.opacity = "0";
-          return;
+      if (gt > 0) {
+        STEPS.forEach((step, i) => {
+          const m = worldMarkers.current[i];
+          if (!m) return;
+          const isGlobal = i >= INDIA_HUBS.length;
+          // India's own world pins (India / UAE) take over from the orange close-up markers during the pull-back
+          const arrive = isGlobal ? arriveAt(p, step) : range(gt, 0.25, 0.7);
+          if (arrive <= 0) {
+            if (m.style.opacity !== "0") m.style.opacity = "0";
+            return;
+          }
+          const s = isGlobal || step.hub.pin ? easeOutBack(arrive) : 0.62; // other India cities: small dots
+          const [x, y] = STEP_PTS[i];
+          m.style.opacity = String(Math.min(1, arrive * 2));
+          m.setAttribute("transform", `translate(${x.toFixed(2)} ${y.toFixed(2)}) scale(${Math.max(0.001, s * u).toFixed(4)})`);
+        });
+      } else {
+        for (let i = 0; i < STEPS.length; i++) {
+          const m = worldMarkers.current[i];
+          if (m && m.style.opacity !== "0") m.style.opacity = "0";
         }
-        const s = isGlobal || step.hub.pin ? easeOutBack(arrive) : 0.62; // other India cities: small dots
-        const [x, y] = worldXY(step.hub.lon, step.hub.lat);
-        m.style.opacity = String(Math.min(1, arrive * 2));
-        m.setAttribute("transform", `translate(${x.toFixed(2)} ${y.toFixed(2)}) scale(${Math.max(0.001, s * u).toFixed(4)})`);
-      });
+      }
       /* countries glow blue once their hub is online (no mid-zoom CSS filter toggles) */
       STEPS.forEach((step, i) => {
         const key = step.hub.country;
@@ -742,15 +743,9 @@ export default function BranchesMap() {
         if (w <= 0) {
           paper.current.style.visibility = "hidden";
         } else {
-          let ox = vw * 0.6;
-          let oy = vh * 0.3;
-          const d = lastDot.current;
-          if (d) {
-            const r = d.getBoundingClientRect();
-            const sr = stageEl.getBoundingClientRect();
-            ox = r.left + r.width / 2 - sr.left;
-            oy = r.top + r.height / 2 - sr.top;
-          }
+          const lastPt = STEP_PTS[STEPS.length - 1];
+          const ox = lastPt ? G.wl + (lastPt[0] - G.vx) * G.ws : vw * 0.6;
+          const oy = lastPt ? G.wt + (lastPt[1] - G.vy) * G.ws : vh * 0.3;
           const rMax = Math.hypot(Math.max(ox, vw - ox), Math.max(oy, vh - oy)) + 40;
           paper.current.style.visibility = "visible";
           paper.current.style.clipPath = `circle(${(w * rMax).toFixed(1)}px at ${ox.toFixed(1)}px ${oy.toFixed(1)}px)`;
@@ -887,7 +882,7 @@ export default function BranchesMap() {
               }}
               viewBox={viewBoxOf(VIEW)}
               focusable="false"
-              style={{ opacity: 0, visibility: "hidden", willChange: "opacity" }}
+              style={{ opacity: 0, willChange: "opacity" }}
             >
               <defs>
                 <pattern id="bm-dots" width="3.2" height="3.2" patternUnits="userSpaceOnUse">

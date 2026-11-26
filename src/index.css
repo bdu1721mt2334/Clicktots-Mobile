@@ -76,7 +76,7 @@ html.lenis.lenis-stopped { overflow: visible; }
   opacity: 1;
 }
 
-/* ═══ Back pill on inner pages (components/BackButton): top-left under the global Navbar logo ═══ */
+/* ═══ Back button on inner pages (components/BackButton): unified brand blue box style ═══ */
 .ct-back {
   position: absolute;
   z-index: 250;
@@ -95,19 +95,22 @@ html.lenis.lenis-stopped { overflow: visible; }
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
-  -webkit-backdrop-filter: blur(14px) saturate(150%);
-  backdrop-filter: blur(14px) saturate(150%);
-  transition: background-color 0.25s, border-color 0.25s, transform 0.2s;
+  color: #fff;
+  background: var(--ct-blue-btn);
+  border: 1px solid var(--ct-blue-btn);
+  box-shadow: 0 10px 26px -10px rgba(0, 113, 227, 0.72);
+  transition: background-color 0.25s, border-color 0.25s, box-shadow 0.25s, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease;
 }
 @media (min-width: 640px) { .ct-back { top: 80px; left: 32px; right: auto; } }
+.ct-back:hover { background: var(--ct-blue-hover); border-color: var(--ct-blue-hover); box-shadow: 0 14px 30px -10px rgba(0, 113, 227, 0.9); }
 .ct-back:active { transform: scale(0.96); }
 .ct-back:focus-visible { outline: 2px solid #0a84ff; outline-offset: 3px; }
-.ct-back-dark { color: #fff; background: rgba(10, 12, 18, 0.45); border: 1px solid rgba(255, 255, 255, 0.16); box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6); }
-.ct-back-dark:hover { background: rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.3); }
-.ct-back-light { color: #10151c; background: rgba(255, 255, 255, 0.6); border: 1px solid rgba(16, 21, 28, 0.12); box-shadow: 0 10px 30px -14px rgba(20, 40, 70, 0.35); }
-.ct-back-light:hover { background: rgba(255, 255, 255, 0.85); }
-.ct-back-icon { position: relative; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 6px; overflow: hidden; background: rgba(255, 255, 255, 0.14); }
-.ct-back-light .ct-back-icon { background: rgba(16, 21, 28, 0.08); }
+.ct-back-dark,
+.ct-back-light { color: #fff; background: var(--ct-blue-btn); border: 1px solid var(--ct-blue-btn); box-shadow: 0 10px 26px -10px rgba(0, 113, 227, 0.72); }
+.ct-back-dark:hover,
+.ct-back-light:hover { background: var(--ct-blue-hover); border-color: var(--ct-blue-hover); box-shadow: 0 14px 30px -10px rgba(0, 113, 227, 0.9); }
+.ct-back-icon { position: relative; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 6px; overflow: hidden; background: rgba(255, 255, 255, 0.18); color: #fff; }
+.ct-back-light .ct-back-icon { background: rgba(255, 255, 255, 0.18); color: #fff; }
 .ct-back-a, .ct-back-b { grid-area: 1 / 1; transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1); }
 .ct-back-b { transform: translateX(150%); }
 .ct-back:hover .ct-back-a { transform: translateX(-150%); }
@@ -115,22 +118,34 @@ html.lenis.lenis-stopped { overflow: visible; }
 @media (max-width: 639px) { .ct-back-label { display: none; } .ct-back { padding: 0 5px; } }
 @media (prefers-reduced-motion: reduce) { .ct-back, .ct-back-a, .ct-back-b { transition: none; } }
 
-/* ═══ CTA arrow chip (Navbar "Talk to Our Experts"): the arrow leaves top-right, a copy slides in from bottom-left ═══ */
-.ct-cta-chip { position: relative; z-index: 10; display: grid; place-items: center; flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; overflow: hidden; background: rgba(255, 255, 255, 0.22); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28); transition: background-color 0.3s; }
+/* ═══ CTA arrow chip (Navbar "Talk to Our Experts"): unified box corner radius ═══ */
+.ct-cta-chip { position: relative; z-index: 10; display: grid; place-items: center; flex-shrink: 0; width: 28px; height: 28px; border-radius: 6px; overflow: hidden; background: rgba(255, 255, 255, 0.22); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28); transition: background-color 0.3s; }
 @media (min-width: 1024px) and (max-width: 1279px) { .ct-cta-chip { width: 22px; height: 22px; } }
 .ct-cta-chip svg { grid-area: 1 / 1; transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
 .ct-cta-chip .ct-cta-b { transform: translate(-140%, 140%); }
 .group:hover .ct-cta-chip { background: #fff; }
-.group:hover .ct-cta-chip svg { color: #0a6cff; }
+.group:hover .ct-cta-chip svg { color: #0071e3; }
 .group:hover .ct-cta-chip .ct-cta-a { transform: translate(140%, -140%); }
 .group:hover .ct-cta-chip .ct-cta-b { transform: translate(0, 0); }
 @media (prefers-reduced-motion: reduce) { .ct-cta-chip svg { transition: none; } }
 
 /* inner-page controls aligned at the top-right corner beside the navbar (e.g. Career theme toggle) */
-.ct-under-nav { top: 16px; right: 64px; }
+.ct-under-nav { top: 16px; right: 64px; border-radius: 8px !important; transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease; }
 @media (min-width: 640px) { .ct-under-nav { top: 24px; right: 76px; } }
 @media (min-width: 1024px) { .ct-under-nav { top: 22px; right: 12px; width: 36px; height: 36px; } }
 @media (min-width: 1280px) { .ct-under-nav { top: 23px; right: 16px; width: 42px; height: 42px; } }
+
+/* Sync floating theme toggle + fixed controls with navbar hide-on-scroll-down / show-on-scroll-up */
+.ct-site-theme-wrap {
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease;
+  will-change: transform;
+}
+html.ct-nav-hidden .ct-site-theme-wrap,
+html.ct-nav-hidden .ct-under-nav {
+  transform: translate3d(0, -180%, 0);
+  opacity: 0;
+  pointer-events: none;
+}
 
 /* Navbar while scrolling: plain frosted glass instead of the costly SVG refraction (see Navbar.jsx) */
 .ct-nav { will-change: transform; }

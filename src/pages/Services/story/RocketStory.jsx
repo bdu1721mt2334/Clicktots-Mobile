@@ -35,7 +35,8 @@ const EXIT = 0.45; // door opens, 3D steps unfold, astronaut walks down the step
 const WALK = 0.35; // moonwalk towards the camera
 const FLAG = 0.22; // flag goes in and unfurls
 const WAVE = 0.1; // turns to the camera and waves
-const RESULT = 0.55; // result card, then the fade into the page
+const FLAG_HOLD = 0.42; // beat holding on astronaut standing by the planted flag before result card arrives
+const RESULT = 2.05; // flag hold + full-brightness result card dwell + clean fade into the next section
 const EASE_RATE = 14; // extra smoothing on top of Lenis (higher = follows the scroll more tightly)
 
 const ASTRO_RATIO = 210 / 416; // 2D fallback astronaut image width / height
@@ -529,7 +530,7 @@ export default function RocketStory({ service, story }) {
           landingThrust: 0,
         });
       } else {
-        scene = s < T.exit1 ? "door" : s < T.walk1 ? "walk" : s < T.flag1 ? "flag" : s < T.wave1 ? "wave" : "result";
+        scene = s < T.exit1 ? "door" : s < T.walk1 ? "walk" : s < T.flag1 ? "flag" : s < T.wave1 + FLAG_HOLD ? "wave" : "result";
         const ratio = G.s3?.orbiterRatio || 0.8;
         const landH = G.landLen / ratio;
         // crew hatch swings open first, then the 3D boarding steps unfold down to the Moon
@@ -739,9 +740,9 @@ export default function RocketStory({ service, story }) {
       }
       if (chromeRef.current) chromeRef.current.style.opacity = String(range(s, 0.95, 1.2) * (1 - range(s, T.moon - 0.1, T.moon + 0.4)));
       if (barRef.current) barRef.current.style.transform = `scaleX(${range(s, INTRO * 0.6, T.flag1).toFixed(4)})`;
-      if (fadeRef.current) fadeRef.current.style.opacity = String(inOut(range(s, T.total - 0.55, T.total - 0.12)));
+      if (fadeRef.current) fadeRef.current.style.opacity = String(inOut(range(s, T.total - 0.52, T.total - 0.08)));
 
-      const navDark = s > 0.35 && s < T.total - 0.28;
+      const navDark = s > 0.35 && s < T.total - 0.24;
       if ((document.documentElement.dataset.navDarkOverride === "1") !== navDark) {
         if (navDark) document.documentElement.dataset.navDarkOverride = "1";
         else delete document.documentElement.dataset.navDarkOverride;

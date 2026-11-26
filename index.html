@@ -16,6 +16,8 @@
     <meta name="twitter:card" content="summary_large_image" />
     <!-- Michroma, self-hosted (one 20 KB file, no render-blocking Google Fonts request) -->
     <link rel="preload" as="font" type="font/woff2" href="/fonts/michroma-latin-400.woff2" crossorigin />
+    <link rel="preload" as="image" href="/layers/d/hero-poster.webp" media="(min-width: 768px)" fetchpriority="high" />
+    <link rel="preload" as="image" href="/layers/m/hero-poster.webp" media="(max-width: 767px)" fetchpriority="high" />
     <style>
       @font-face {
         font-family: "Michroma";
@@ -26,31 +28,23 @@
       }
       html, body { margin: 0; padding: 0; background: #05070c; color: #fff; font-family: "Michroma", system-ui, -apple-system, sans-serif; }
       .ct-ssr-hero { position: relative; height: 100svh; width: 100%; overflow: hidden; background: #05070c; }
-      .ct-ssr-layer { position: absolute; inset: 0; }
-      .ct-ssr-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 58% 50%; display: block; }
-      @media (min-width: 768px) { .ct-ssr-img { object-position: center; } }
+      .ct-ssr-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
       .ct-ssr-veil {
         position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
         padding: 0 20px; text-align: center; pointer-events: none;
-        background:
-          radial-gradient(ellipse 68% 54% at 28% 36%, rgba(162, 182, 218, 0.34) 0%, rgba(78, 96, 132, 0.24) 42%, transparent 74%),
-          radial-gradient(ellipse 52% 44% at 62% 44%, rgba(112, 134, 174, 0.20) 0%, rgba(36, 48, 74, 0.18) 48%, transparent 78%),
-          radial-gradient(ellipse 80% 60% at 20% 52%, rgba(128, 148, 184, 0.22) 0%, transparent 65%),
-          linear-gradient(180deg, rgba(4, 7, 13, 0.42) 0%, rgba(18, 26, 42, 0.32) 48%, rgba(4, 7, 13, 0.56) 100%);
       }
-      .ct-ssr-dust { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
       .ct-ssr-eyebrow {
         position: relative; z-index: 2; margin: 0; font-family: "Michroma", system-ui, sans-serif; font-size: clamp(0.6rem, 1.05vw, 0.85rem);
-        letter-spacing: 0.16em; text-transform: uppercase; color: rgba(215, 224, 240, 0.74);
+        letter-spacing: 0.16em; text-transform: uppercase; color: rgba(215, 224, 240, 0.78);
         text-shadow: 0 1px 10px rgba(0, 6, 18, 0.8);
       }
       .ct-ssr-prompt {
         position: relative; z-index: 2; margin: 12px 0 0; font-family: "Michroma", system-ui, sans-serif; font-size: clamp(0.72rem, 1.32vw, 1.1rem);
-        letter-spacing: 0.22em; text-transform: uppercase; color: rgba(255, 255, 255, 0.94);
+        letter-spacing: 0.22em; text-transform: uppercase; color: rgba(255, 255, 255, 0.95);
         text-shadow: 0 2px 18px rgba(0, 6, 18, 0.85);
       }
       @media (min-width: 768px) { .ct-ssr-prompt { letter-spacing: 0.34em; } }
-      .ct-ssr-arrow { position: relative; z-index: 2; margin: 22px 0 0; font-size: 0.95rem; color: rgba(215, 224, 240, 0.72); }
+      .ct-ssr-arrow { position: relative; z-index: 2; margin: 22px 0 0; font-size: 0.95rem; color: rgba(215, 224, 240, 0.78); }
       .ct-ssr-nav {
         position: fixed; top: 0; left: 0; right: 0; z-index: 50; padding: 16px 16px 0; pointer-events: none;
       }
@@ -66,11 +60,6 @@
       }
       @media (min-width: 1024px) { .ct-ssr-menu { display: none; } }
     </style>
-    <link rel="preload" as="image" href="/layers/d/moonscape.webp" media="(min-width: 768px)" fetchpriority="high" />
-    <link rel="preload" as="image" href="/layers/d/sky.webp" media="(min-width: 768px)" fetchpriority="high" />
-    <link rel="preload" as="image" href="/layers/m/moonscape.webp" media="(max-width: 767px)" fetchpriority="high" />
-    <link rel="preload" as="image" href="/layers/m/sky.webp" media="(max-width: 767px)" fetchpriority="high" />
-    <link rel="preload" as="image" href="/layers/m/earth.webp" media="(max-width: 767px)" fetchpriority="high" />
   </head>
   <body>
     <div id="root">
@@ -83,37 +72,11 @@
             </div>
           </div>
         </div>
-        <div class="ct-ssr-layer" style="transform:translate3d(0,0,0) scale(1.08)">
-          <picture>
-            <source media="(max-width: 767px)" srcset="/layers/m/sky.webp" />
-            <img src="/layers/d/sky.webp" alt="" width="1280" height="724" class="ct-ssr-img" decoding="sync" fetchpriority="high" />
-          </picture>
-        </div>
-        <div class="ct-ssr-layer" style="transform:translate3d(0,10vh,0) scale(0.95)">
-          <picture>
-            <source media="(max-width: 767px)" srcset="/layers/m/earth.webp" />
-            <img src="/layers/d/earth.webp" alt="" width="1280" height="724" class="ct-ssr-img" decoding="sync" />
-          </picture>
-        </div>
-        <div class="ct-ssr-layer" style="transform:translate3d(0,3vh,0)">
-          <picture>
-            <source media="(max-width: 767px)" srcset="/layers/m/moonscape.webp" />
-            <img src="/layers/d/moonscape.webp" alt="" width="1280" height="724" class="ct-ssr-img" decoding="sync" fetchpriority="high" />
-          </picture>
-        </div>
+        <picture>
+          <source media="(max-width: 767px)" srcset="/layers/m/hero-poster.webp" />
+          <img src="/layers/d/hero-poster.webp" alt="" width="1280" height="724" class="ct-ssr-img" decoding="sync" fetchpriority="high" />
+        </picture>
         <div class="ct-ssr-veil">
-          <svg class="ct-ssr-dust" aria-hidden="true" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice">
-            <g fill="#ffffff">
-              <circle cx="84" cy="96" r="1.4" opacity=".65"/><circle cx="166" cy="148" r="1.1" opacity=".5"/><circle cx="248" cy="82" r="1.8" opacity=".75"/>
-              <circle cx="342" cy="162" r="1.2" opacity=".6"/><circle cx="430" cy="118" r="1.5" opacity=".7"/><circle cx="546" cy="154" r="1.3" opacity=".6"/>
-              <circle cx="662" cy="110" r="1.7" opacity=".75"/><circle cx="788" cy="134" r="1.2" opacity=".55"/><circle cx="912" cy="88" r="1.5" opacity=".65"/>
-              <circle cx="122" cy="248" r="1.2" opacity=".5"/><circle cx="212" cy="286" r="1.6" opacity=".7"/><circle cx="386" cy="244" r="1.1" opacity=".55"/>
-              <circle cx="584" cy="230" r="1.4" opacity=".65"/><circle cx="734" cy="264" r="1.6" opacity=".7"/><circle cx="866" cy="222" r="1.1" opacity=".5"/>
-              <circle cx="96" cy="392" r="1.5" opacity=".6"/><circle cx="274" cy="436" r="1.3" opacity=".65"/><circle cx="448" cy="382" r="1.1" opacity=".5"/>
-              <circle cx="642" cy="408" r="1.7" opacity=".8"/><circle cx="764" cy="356" r="1.4" opacity=".7"/><circle cx="892" cy="418" r="1.2" opacity=".55"/>
-              <circle cx="182" cy="514" r="1.4" opacity=".6"/><circle cx="412" cy="534" r="1.6" opacity=".7"/><circle cx="688" cy="518" r="1.3" opacity=".6"/>
-            </g>
-          </svg>
           <p class="ct-ssr-eyebrow">AI-POWERED DIGITAL MARKETING AGENCY &middot; CHENNAI</p>
           <p class="ct-ssr-prompt">SCROLL TO CLEAR THE MARKET NOISE</p>
           <span class="ct-ssr-arrow" aria-hidden="true">&darr;</span>
